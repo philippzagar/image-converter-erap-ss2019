@@ -12,7 +12,9 @@ extern void blur(FILE* in, FILE* out, int width, int height);
 bool readHeader(FILE* inFile, BMPHeader* header);
 bool readInfo(FILE* inFile, BMPImageInfo* info);
 bool checkBMPImage(BMPHeader header, BMPImageInfo info);
-bool readPixels(FILE* inFile, BMPImageInfo info);
+RGB* readPixels(FILE* inFile, BMPImageInfo info);
+bool writeImage(FILE* outFile, BMPHeader header, BMPImageInfo info, RGB *rgbValues);
+void convertRGBtoGreyscale(RGB *rgbValues, BMPImageInfo info);
 
 // Main Routine
 int main(int argc, char** argv) {
@@ -83,7 +85,22 @@ int main(int argc, char** argv) {
     }
 
     // Read RGB values from picture
-    if(!readPixels(inFile, info)) {
+    RGB* rgbValues = readPixels(inFile, info);
+    if(!rgbValues) {
+        return -1;
+    }
+
+    // Convert to greyscale
+    convertRGBtoGreyscale(rgbValues, info);
+
+    // Open file to write back the picture to memory
+    outFile = fopen("./lena_grey.bmp", "wb");
+    if( !outFile ) {
+        return -1;
+    }
+
+    // Write image with header and info back to memory
+    if(!writeImage(outFile, header, info, rgbValues)) {
         return -1;
     }
 
@@ -95,7 +112,10 @@ int main(int argc, char** argv) {
             return -1; // manage error and close file
     }
     */
+
+    // Close open files
     fclose(inFile);
+    fclose(outFile);
 
 
 // Binary method => if read later by another computer
@@ -198,10 +218,9 @@ bool checkBMPImage(BMPHeader header, BMPImageInfo info) {
 }
 
 // Read RGB Pixels from BMP image
-bool readPixels(FILE* inFile, BMPImageInfo info) {
+RGB* readPixels(FILE* inFile, BMPImageInfo info) {
     // Allocate memory space for RGB array of pixels
     RGB *rgbValues = (RGB*) malloc(info.width * info.height * sizeof(RGB));
-    //RGB *rgbValues = (RGB*) malloc(100);
 
     // Read values
     for(int i = 0; i < info.height; i++) {
@@ -210,13 +229,13 @@ bool readPixels(FILE* inFile, BMPImageInfo info) {
         // Read the values from the file to the right position in the RGB array
         if( fread(rgbValues + (i * info.width), sizeof(RGB), info.width, inFile) != info.width ) {
             printf("Error - Reading RGB values!\n");
-            return false;
+            return NULL;
         }
 
         // Alignment of every new row in the picture
         if(fseek(inFile, (info.width * sizeof(RGB)) % 4, SEEK_CUR) != 0) {
             printf("Error - Moving offset!\n");
-            return false;
+            return NULL;
         }
 
     }
@@ -230,6 +249,66 @@ bool readPixels(FILE* inFile, BMPImageInfo info) {
         printf("%02x    ", rgbValues[x].red);
     }
     */
+
+    return rgbValues;
 }
 
+// Write Image with the header
+bool writeImage(FILE* outFile, BMPHeader header, BMPImageInfo info, RGB *rgbValues) {
+    // Write Header
+    if( fwrite(&header.signature, sizeof(char), 2, outFile) != 2 ) {
+        return false;
+    }
+
+    if( fwrite(&header.fileSize, sizeof(unsigned int), 1, outFile) != 1 ) {
+        return false;
+    }
+
+    if( fwrite(&header.reserved, sizeof(unsigned int), 1, outFile) != 1 ) {
+        return false;
+    }
+
+    if( fwrite(&header.offset, sizeof(unsigned int), 1, outFile) != 1 ) {
+        return false;
+    }
+
+    // Write Info
+    if( fwrite(&info, sizeof(BMPImageInfo), 1, outFile) != 1 ) {
+        return false;
+    }
+
+    // Write RGB values row for row because of alignment
+    for(int i = 0; i < info.height; i++) {
+        if( fwrite(rgbValues + i * info.width, sizeof(RGB), info.width, outFile) != info.width ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Convert RGB values to greyscale
+void convertRGBtoGreyscale(RGB *rgbValues, BMPImageInfo info) {
+    // Constants
+    float a = 0.3;
+    float b = 0.58;
+    float c = 0.11;
+    float sum = a + b + c;
+
+    // Loop to convert every pixel to greyscale
+    for(int i = 0; i < info.height; i++) {
+        for(int j = 0; j < info.width; j++) {
+            // Round down the result because RGB can only have integer numbers
+            int D = (a * rgbValues[i*info.height + j].red
+                    + b * rgbValues[i*info.height + j].green
+                    + c * rgbValues[i*info.height + j].blue)
+                    / sum;
+
+            // Set grey color to RGB pixel
+            rgbValues[i*info.height + j].red = D;
+            rgbValues[i*info.height + j].green = D;
+            rgbValues[i*info.height + j].blue = D;
+        }
+    }
+}
 
