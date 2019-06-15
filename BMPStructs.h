@@ -32,7 +32,6 @@ typedef struct
     unsigned char blue;
     unsigned char green;
     unsigned char red;
-    unsigned char reserved;
 } RGB;
 
 typedef struct

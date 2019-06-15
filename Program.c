@@ -12,6 +12,7 @@ extern void blur(FILE* in, FILE* out, int width, int height);
 bool readHeader(FILE* inFile, BMPHeader* header);
 bool readInfo(FILE* inFile, BMPImageInfo* info);
 bool checkBMPImage(BMPHeader header, BMPImageInfo info);
+bool readPixels(FILE* inFile, BMPImageInfo info);
 
 // Main Routine
 int main(int argc, char** argv) {
@@ -81,7 +82,10 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-
+    // Read RGB values from picture
+    if(!readPixels(inFile, info)) {
+        return -1;
+    }
 
     /*
     if( info.numColors > 0 )
@@ -191,6 +195,41 @@ bool checkBMPImage(BMPHeader header, BMPImageInfo info) {
     }
 
     return true;
+}
+
+// Read RGB Pixels from BMP image
+bool readPixels(FILE* inFile, BMPImageInfo info) {
+    // Allocate memory space for RGB array of pixels
+    RGB *rgbValues = (RGB*) malloc(info.width * info.height * sizeof(RGB));
+    //RGB *rgbValues = (RGB*) malloc(100);
+
+    // Read values
+    for(int i = 0; i < info.height; i++) {
+        //printf("%i\n", i);
+
+        // Read the values from the file to the right position in the RGB array
+        if( fread(rgbValues + (i * info.width), sizeof(RGB), info.width, inFile) != info.width ) {
+            printf("Error - Reading RGB values!\n");
+            return false;
+        }
+
+        // Alignment of every new row in the picture
+        if(fseek(inFile, (info.width * sizeof(RGB)) % 4, SEEK_CUR) != 0) {
+            printf("Error - Moving offset!\n");
+            return false;
+        }
+
+    }
+
+    // Output loop
+    /*
+    for(int x = 250000; x < 262144; x++) {
+        printf("%i: ", x);
+        printf("%02x ", rgbValues[x].blue);
+        printf("%02x ", rgbValues[x].green);
+        printf("%02x    ", rgbValues[x].red);
+    }
+    */
 }
 
 
