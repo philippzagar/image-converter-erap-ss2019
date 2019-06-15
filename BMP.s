@@ -52,3 +52,21 @@ greyscale:
 .LincCounterHeight:
 	inc r10
 	jmp .LloopHeight
+		
+
+
+    
+
+
+
+
+.Lend:
+
+pop rbx
+ret
+
+
+// void blur(File* in, File* out, int width, int height)
+.global blur
+blur:
+    ret
