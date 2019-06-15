@@ -291,8 +291,8 @@ bool writeImage(FILE* outFile, BMPHeader header, BMPImageInfo info, RGB *rgbValu
 void convertRGBtoGreyscale(RGB *rgbValues, BMPImageInfo info) {
     // Constants
     float a = 0.3;
-    float b = 0.58;
-    float c = 0.11;
+    float b = 0.3;
+    float c = 0.3;
     float sum = a + b + c;
 
     // Loop to convert every pixel to greyscale
