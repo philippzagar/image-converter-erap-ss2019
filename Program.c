@@ -5,7 +5,7 @@
 #include "BMPStructs.h"
 
 // Assembly Functions
-extern void greyscale(RGB* rgbValues, int width, int height);
+extern void greyscale(RGB* rgbValues, RGB* rgbValuesOut, int width, int height);
 extern void blur(RGB* rgbValues, RGB* output, int width, int height);
 
 // C Functions
@@ -90,8 +90,14 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    // Convert to greyscale
-    convertRGBtoGreyscale(rgbValues, info);
+    // Convert to greyscale********************************************************************************************************************
+    greyscale(rgbValues, rgbValues, info->width, info->height);
+
+
+
+
+
+
 
     // Open file to write back the picture to memory
     outFile = fopen("./lena_grey.bmp", "wb");
