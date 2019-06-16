@@ -13,33 +13,37 @@ greyscale:
 	
 	push rbx
 
-	xor r10, r10 # Height counter
+	xor r10, r10 #Height counter = 0
 
 
 .LloopHeight:
 
 	cmp r10, rcx
 	jge .Lend	#if(r10 >= height)
-	xor r11, r11 	# i = 0 for new loop
+	xor r11, r11 	#Width counter = 0
 
 
 .Lloopwidth:
 	cmp r11, rdx
 	jge .LincCounterHeight #if(r11 >= width)
+
+	mov rbx, r10
 	
-	lea rbx, [r10 * 4]
+	imul rbx, rdx
+
+
 	add rbx, r11
 	
 	xor rax, rax	
 	
-	mov al, byte ptr [rdi + rbx] #Blue
-	mov [rsi + rbx], al
+	mov al, byte ptr [rdi + rbx * 4] #Blue
+	mov [rsi + rbx*4], al
 
-	mov al, byte ptr [rdi + rbx + 1] #Green
-	mov [rsi + rbx + 1], al
+	mov al, byte ptr [rdi + rbx*4 + 1] #Green
+	mov [rsi + rbx*4 + 1], al
 	
-	mov al, byte ptr [rdi + rbx + 2]#Red
-	mov [rsi + rbx + 2], al	
+	mov al, byte ptr [rdi + rbx*4 + 2]#Red
+	mov [rsi + rbx*4 + 2], al	
 
 		
   	
