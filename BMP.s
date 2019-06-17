@@ -13,6 +13,9 @@ greyscale:
 	
 	push rbx
 
+	mov rdx, 400
+	mov rcx, 400
+
 	xor r10, r10 #Height counter = 0
 
 
@@ -40,10 +43,10 @@ greyscale:
 	mov [rsi + rbx*4], al
 
 	mov al, byte ptr [rdi + rbx*4 + 1] #Green
-	mov [rsi + rbx*4 + 1], al
+	mov [rsi + rbx*4 + 2], al
 	
 	mov al, byte ptr [rdi + rbx*4 + 2]#Red
-	mov [rsi + rbx*4 + 2], al	
+	mov [rsi + rbx*4 + 1], al	
 
 		
   	
@@ -74,3 +77,4 @@ ret
 .global blur
 blur:
     ret
+
