@@ -5,7 +5,7 @@
 #include "BMPStructs.h"
 
 // Assembly Functions
-extern void greyscale(RGB *rgbValues, RGB *rgbValuesOut, int width, int height);
+extern void greyscale(RGB *rgbValuesOut, int width, int height);
 extern void blur(FILE* in, FILE* out, int width, int height);
 
 // C Functions
@@ -91,9 +91,9 @@ int main(int argc, char** argv) {
     }
 
     // Convert to greyscale********************************************************************************************************************
-    //greyscale(rgbValues, rgbValues, info->width, info->height);
+    greyscale(rgbValues, info->width, info->height);
 
-    convertRGBtoGreyscale(rgbValues, info);
+    //convertRGBtoGreyscale(rgbValues, info);
     //convolutionRGB(rgbValues, info);
 
 
