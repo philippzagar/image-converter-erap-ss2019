@@ -282,7 +282,7 @@ bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbVa
     }
 
     // Write Info
-    if( fwrite(&info, sizeof(BMPImageInfo), 1, outFile) != 1 ) {
+    if( fwrite(info, sizeof(BMPImageInfo), 1, outFile) != 1 ) {
         return false;
     }
 
