@@ -15,6 +15,7 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info);
 RGB* readPixels(FILE* inFile, BMPImageInfo* info);
 bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues);
 void convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info);
+void convolutionRGB(RGB* rgbValues, BMPImageInfo* info);
 
 // Main Routine
 int main(int argc, char** argv) {
@@ -91,10 +92,10 @@ int main(int argc, char** argv) {
     }
 
     // Convert to greyscale********************************************************************************************************************
-    greyscale(rgbValues, rgbValues, info->width, info->height);
+    //greyscale(rgbValues, rgbValues, info->width, info->height);
 
-
-
+    convertRGBtoGreyscale(rgbValues, info);
+    //convolutionRGB(rgbValues, info);
 
 
 
@@ -282,7 +283,7 @@ bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbVa
     }
 
     // Write Info
-    if( fwrite(&info, sizeof(BMPImageInfo), 1, outFile) != 1 ) {
+    if( fwrite(info, sizeof(BMPImageInfo), 1, outFile) != 1 ) {
         return false;
     }
 
@@ -321,3 +322,67 @@ void convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
     }
 }
 
+// Convert RGB values to greyscale
+void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
+    // Constants
+    char kernel[3][3] = {
+            {1, 2, 1},
+            {2, 4, 2},
+            {1, 2, 1}
+    };
+
+    // Variables
+    int sumRed = 0;
+    int sumGreen = 0;
+    int sumBlue = 0;
+    char sumRedChar;
+    char sumGreenChar;
+    char sumBlueChar;
+
+    // Loop every pixel of image
+    for(int i = 0; i < info->height; i++) {
+        for(int j = 0; j < info->width; j++) {
+            // Calculate pointer to the current pixel
+            RGB* pointer = rgbValues + (i * info->width) + (j);
+
+            printf("i: %i j: %i         ", i, j);
+
+            // Loop through kernel
+            for(int kerneli = -1; kerneli <= 1; kerneli++) {
+                for(int kernelj = -1; kernelj <= 1; kernelj++) {
+                    // Check if the kernel is inside of the picture
+                    if(i + kerneli >= 0 && j + kernelj >= 0 &&
+                        i + kerneli < info->height && j + kernelj < info->width) {
+
+                        printf("kerneli: %i kernelj: %i         ", kerneli, kernelj);
+
+                        RGB* helpPointer = pointer + kerneli * info->width + kernelj;
+
+                        // Sum up
+                        sumRed += helpPointer->red * kernel[kerneli+1][kernelj+1];
+                        sumGreen += helpPointer->green * kernel[kerneli+1][kernelj+1];
+                        sumBlue += helpPointer->blue * kernel[kerneli+1][kernelj+1];
+                    }
+                }
+            }
+
+            // Devide
+            sumRed /= 16;
+            sumGreen /= 16;
+            sumBlue /= 16;
+
+            // Parse int to char
+            sumRedChar = sumRed;
+            sumGreenChar = sumRed;
+            sumBlueChar = sumRed;
+
+            // Write back to RGB value
+            pointer->red = sumRedChar;
+            pointer->green = sumGreenChar;
+            pointer->blue = sumBlueChar;
+
+            // Set sums to 0
+            sumRed = 0; sumGreen = 0; sumBlue = 0;
+        }
+    }
+}
