@@ -4,17 +4,19 @@
 .text
 
 
-# void greyscale(FILE* in, FILE* out, int width, int height);
+# void greyscale(RGB* out, int width, int height);
 greyscale:
-	# rdi = Adress for color file data
- 	# rsi = Adress for the greyscale data
-	# rdx = width 
-	# rcx = height
+	# rdi = Adress for color file data and for writing data back
+ 	# rsi = width
+	# rcx = height 
+
+
+	mov rcx, rdx #moved height for devision
+	
+
 	
 	push rbx
 
-	mov rdx, 400
-	mov rcx, 400
 
 	xor r10, r10 #Height counter = 0
 
@@ -27,31 +29,41 @@ greyscale:
 
 
 .Lloopwidth:
-	cmp r11, rdx
+	cmp r11, rsi
 	jge .LincCounterHeight #if(r11 >= width)
 
-	mov rbx, r10
-	
-	imul rbx, rdx
-
-
-	add rbx, r11
-	
-	xor rax, rax	
-	
-	mov al, byte ptr [rdi + rbx * 4] #Blue
-	mov [rsi + rbx*4], al
-
-	mov al, byte ptr [rdi + rbx*4 + 1] #Green
-	mov [rsi + rbx*4 + 2], al
-	
-	mov al, byte ptr [rdi + rbx*4 + 2]#Red
-	mov [rsi + rbx*4 + 1], al	
+	mov rbx, r10 # which level we are on
+	imul rbx, rsi # Multiply by the pixels of before
+	add rbx, r11 # in which pixel we are
 
 		
-  	
-	#für den durchschnitt alles hier
+	xor rax, rax
+	xor r8, r8	
+	
+	imul rbx, 3
 
+	mov al, [rdi + rbx] #Blue
+	lea r8d, [eax * 1]
+
+	mov al, [rdi+rbx + 1] #Green
+	lea r8d, [r8d + eax * 1]
+	
+	mov al, [rdi + rbx + 2]#Red
+	lea r8d, [r8d + eax * 1]
+
+	mov eax, r8d
+	mov r8, 3
+
+	xor rdx, rdx
+	
+	div r8
+
+	mov [rdi + rbx], al
+	mov [rdi + rbx + 1], al
+	mov [rdi + rbx + 2], al	
+
+	
+  	
 	inc r11
 	jmp .Lloopwidth
 
