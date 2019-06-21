@@ -5,51 +5,54 @@
 
 
 # void greyscale(RGB* out, int width, int height);
+
+#-------------------Bei der Übergabe----------------------------
+#
+#	# rdi = Adress for color file data and for writing data back
+# 	# rsi = width
+#	# rcx = height
+#
+#---------------------------------------------------------------
+
 greyscale:
-	# rdi = Adress for color file data and for writing data back
- 	# rsi = width
-	# rcx = height 
 
-
-	mov rcx, rdx #moved height for devision
+	#r10 = counter for loop
+	#rsi = amountOfChannels
+	#r8 = calculating average
 	
 
 	
-	push rbx
+
+	mov rcx, rdx 		#moved height for devision
+	
+	imul rsi, rcx 		#pixelAmount = height * width
+	imul rsi, 3 		#ChannelAmount = pixelAmount * 3
+
+	
 
 
-	xor r10, r10 #Height counter = 0
+	xor r10, r10 		#loop Counter = 0
 
 
-.LloopHeight:
+.Lloop:
 
-	cmp r10, rcx
-	jge .Lend	#if(r10 >= height)
-	xor r11, r11 	#Width counter = 0
+	cmp r10, rsi
+	jge .Lend		#if(r10 >= pixelAmount) --> end loop
 
 
-.Lloopwidth:
-	cmp r11, rsi
-	jge .LincCounterHeight #if(r11 >= width)
-
-	mov rbx, r10 # which level we are on
-	imul rbx, rsi # Multiply by the pixels of before
-	add rbx, r11 # in which pixel we are
 
 		
 	xor rax, rax
 	xor r8, r8	
-	
-	imul rbx, 3
 
-	mov al, [rdi + rbx] #Blue
-	lea r8d, [eax * 1]
+	mov al, [rdi + r10] 	#Blue channel
+	lea r8d, [eax * 1]	#Add to avg with weighting
 
-	mov al, [rdi+rbx + 1] #Green
-	lea r8d, [r8d + eax * 1]
+	mov al, [rdi+ r10 + 1] 	#Green channel
+	lea r8d, [r8d + eax * 1]#Add to avg with weighting
 	
-	mov al, [rdi + rbx + 2]#Red
-	lea r8d, [r8d + eax * 1]
+	mov al, [rdi+ r10 + 2]	#Red channel
+	lea r8d, [r8d + eax * 1]#Add to avg with weighting
 
 	mov eax, r8d
 	mov r8, 3
@@ -58,19 +61,17 @@ greyscale:
 	
 	div r8
 
-	mov [rdi + rbx], al
-	mov [rdi + rbx + 1], al
-	mov [rdi + rbx + 2], al	
+	mov [rdi + r10], al  	#Blue channel
+	mov [rdi+ r10 + 1], al	#Green channel
+	mov [rdi+ r10 + 2], al	#Red channel
 
 	
   	
-	inc r11
-	jmp .Lloopwidth
+	add r10, 3 #Move to the next pixel
+	jmp .Lloop
 
 
-.LincCounterHeight:
-	inc r10
-	jmp .LloopHeight
+
 		
 
 
@@ -81,7 +82,6 @@ greyscale:
 
 .Lend:
 
-pop rbx
 ret
 
 
