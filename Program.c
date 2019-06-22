@@ -91,9 +91,9 @@ int main(int argc, char** argv) {
     }
 
     // Convert to greyscale********************************************************************************************************************
-    greyscale(rgbValues, info->width, info->height);
+    //greyscale(rgbValues, info->width, info->height);
 
-    //convertRGBtoGreyscale(rgbValues, info);
+    convertRGBtoGreyscale(rgbValues, info);
     //convolutionRGB(rgbValues, info);
 
 
@@ -121,35 +121,6 @@ int main(int argc, char** argv) {
     free(info);
     free(rgbValues);
 
-// Binary method => if read later by another computer
-/*
-    outFile = fopen("./lena_rgb", "wb");
-    if( !outFile )
-        return -1;
-
-    if( fwrite(&info.numColors, sizeof(unsigned int), 1, outFile) != 1 )
-        return -1; // Manage Error and close file
-
-    if( fwrite(&palette, sizeof(RGB), info.numColors, outFile) != info.numColors )
-        return -1; // Manage error and close file
-
-    fclose(outFile);
-*/
-// Text method => if read later by human
-/*
-    outFile = fopen("path", "w");
-    if( !outFile )
-        return -1;
-
-    for( i=0; i<info.numColors; ++i )
-    {
-        p = &palette[i];
-        if( fprintf(outFile, "R:%d, G:%d, B:%d\n", p->red, p->green, p->blue) < 0 )
-            return -1; // Manage error and close file
-    }
-
-    fclose(outFile);
-*/
     return 0;
 }
 
@@ -162,7 +133,7 @@ BMPHeader* readHeader(FILE* inFile) {
 
     BMPHeader* header = (BMPHeader*) malloc(sizeof(BMPHeader));
 
-    // Read Header data
+    // Read Header data one by one because of alignment
     if( fread(&header->signature[0], sizeof(char), 1, inFile) != 1  ||
         fread(&header->signature[1], sizeof(char), 1, inFile) != 1  ||
         fread(&header->fileSize, sizeof(unsigned int), 1, inFile) != 1 ||
@@ -170,11 +141,6 @@ BMPHeader* readHeader(FILE* inFile) {
         fread(&header->offset, sizeof(unsigned int), 1, inFile) != 1 )
     {
         return NULL; // Manage error and close file
-    }
-
-    // Check valid BMP picture
-    if(header->signature[0] != 0x42 || header->signature[1] != 0x4D) {
-        return NULL;
     }
 
     return header;
@@ -193,6 +159,18 @@ BMPImageInfo* readInfo(FILE* inFile) {
 
 // Check if BMP Image is valid
 bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
+    // Check valid BMP picture
+    if(header->signature[0] != 0x42 || header->signature[1] != 0x4D) {
+        return false;
+    }
+
+    // Check if the header size is correct, we assume the header is a 40 byte info header
+    if(info->headerSize != 40) {
+        printf("Error - Header size not correct!\n");
+        printf("Header size is %d\n", info->headerSize);
+        //return false;
+    }
+
     // Check if the size of the header is correct -> header (14 byte) + info size is the offset, where the pixel data begins
     if(header->offset != 14 + info->headerSize) {
         printf("Error - Header size not correct!\n");
@@ -231,18 +209,34 @@ RGB* readPixels(FILE* inFile, BMPImageInfo* info) {
     // Allocate memory space for RGB array of pixels
     RGB *rgbValues = (RGB*) malloc(info->width * info->height * sizeof(RGB));
 
+    // Moving offset of the info header because the size can vary
+    if(info->headerSize != 40) {
+        printf("Moving header %d\n", info->headerSize - 40);
+
+        if(fseek(inFile, info->headerSize - 40, SEEK_CUR) != 0) {
+            printf("Error - Moving offset of header!\n");
+            return NULL;
+        }
+    }
+
+    // Alignment of every new row in the picture
+    int alignment;
+
+    if(((info->width * sizeof(RGB)) % 4) == 0) {
+        alignment = 0;
+    } else {
+        alignment = 4 - (info->width * sizeof(RGB)) % 4;
+    }
+
     // Read values
     for(int i = 0; i < info->height; i++) {
-        //printf("%i\n", i);
-
         // Read the values from the file to the right position in the RGB array
         if( fread(rgbValues + (i * info->width), sizeof(RGB), info->width, inFile) != info->width ) {
             printf("Error - Reading RGB values!\n");
             return NULL;
         }
 
-        // Alignment of every new row in the picture
-        if(fseek(inFile, (info->width * sizeof(RGB)) % 4, SEEK_CUR) != 0) {
+        if(fseek(inFile, alignment, SEEK_CUR) != 0) {
             printf("Error - Moving offset!\n");
             return NULL;
         }
@@ -286,15 +280,43 @@ bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbVa
         return false;
     }
 
+    // Moving offset of the info header because the size can vary
+    if(info->headerSize != 40) {
+        printf("Moving header %d\n", info->headerSize - 40);
+
+        if(fseek(outFile, info->headerSize - 40, SEEK_CUR) != 0) {
+            printf("Error - Moving offset of header!\n");
+            return false;
+        }
+    }
+
+    // Alignment of every new row in the picture
+    int alignment;
+
+    if(((info->width * sizeof(RGB)) % 4) == 0) {
+        alignment = 0;
+    } else {
+        alignment = 4 - (info->width * sizeof(RGB)) % 4;
+    }
+
     // Write RGB values row for row because of alignment
     for(int i = 0; i < info->height; i++) {
         if( fwrite(rgbValues + i * info->width, sizeof(RGB), info->width, outFile) != info->width ) {
             return false;
         }
 
-        // Alignment of every new row in the picture
-        if(fseek(outFile, (info->width * sizeof(RGB)) % 4, SEEK_CUR) != 0) {
-            printf("Error - Moving offset!\n");
+        if(i != info->height-1) {
+            if(fseek(outFile, alignment, SEEK_CUR) != 0) {
+                printf("Error - Moving offset!\n");
+                return false;
+            }
+        }
+    }
+
+    // Add last alignment of file
+    char zero = 0;
+    for(int i = 0; i < alignment; i++) {
+        if( fwrite(&zero, 1, 1, outFile) != 1 ) {
             return false;
         }
     }
@@ -314,15 +336,15 @@ void convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
     for(int i = 0; i < info->height; i++) {
         for(int j = 0; j < info->width; j++) {
             // Round down the result because RGB can only have integer numbers
-            int D = (a * rgbValues[i*info->height + j].red
-                    + b * rgbValues[i*info->height + j].green
-                    + c * rgbValues[i*info->height + j].blue)
+            int D = (a * rgbValues[i*info->width + j].red
+                    + b * rgbValues[i*info->width + j].green
+                    + c * rgbValues[i*info->width + j].blue)
                     / sum;
 
             // Set grey color to RGB pixel
-            rgbValues[i*info->height + j].red = D;
-            rgbValues[i*info->height + j].green = D;
-            rgbValues[i*info->height + j].blue = D;
+            rgbValues[i*info->width + j].red = D;
+            rgbValues[i*info->width + j].green = D;
+            rgbValues[i*info->width + j].blue = D;
         }
     }
 }
