@@ -6,6 +6,9 @@
 
 // Assembly Functions
 extern void greyscale(RGB *rgbValuesOut, int width, int height);
+void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
+
+
 extern void blur(FILE* in, FILE* out, int width, int height);
 
 // C Functions
