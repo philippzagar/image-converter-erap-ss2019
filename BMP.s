@@ -95,7 +95,7 @@ greyscale:
 
 
 
-.global
+.global greyscale_simd
 greyscale_simd:
 
 
