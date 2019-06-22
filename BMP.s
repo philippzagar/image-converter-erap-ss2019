@@ -15,8 +15,9 @@ greyWeighting:      .byte 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01
 #							#
 #	# rdi = Adress pixel Array (Read and write)	#
 # 	# rsi = width					#	
-#	# rcx = height					#
-#							#	
+#	# rcx = height					#	
+#							#
+#	--> Keine Rückgabe erwartet			#	
 #-------------------------------------------------------#
 
 greyscale:
@@ -76,15 +77,54 @@ greyscale:
 	jmp .Lloop
 
 .Lend:
-ret
+	ret
 
+#**************************************************************
+
+
+# void greyscale_simd(RGB* out, int width, int height);
+
+#-------------------Bei der Übergabe--------------------#
+#							#
+#	# rdi = Adress pixel Array (Read and write)	#
+# 	# rsi = width					#	
+#	# rcx = height					#	
+#							#
+#	--> Keine Rückgabe erwartet			#	
+#-------------------------------------------------------#
+
+
+
+.global
 greyscale_simd:
 
-jmp greyscale
+
+	.Lconvert:
+
+	#todo:
+	#Have to find simd operator
 
 
 
+	.Lload:
+	
+	#todo:
+	#load only pixel row that fully fits into simd 
+	#do the rest with non simd
 
+
+	jmp greyscale 	#Temporary so that code does not fuck up 
+
+
+
+	.LlastPixels: 	#Pixels that do not fit into a simd
+
+	#todo:
+	#Make sure height and width are choosen correctly
+	#
+
+
+	#jmp
 
 
 
