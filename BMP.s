@@ -1,5 +1,6 @@
 .intel_syntax noprefix
 .global greyscale 
+.global greyscale_simd
 
 .data
 
@@ -15,7 +16,7 @@ greyWeighting:      .byte 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01
 #							#
 #	# rdi = Adress pixel Array (Read and write)	#
 # 	# rsi = width					#	
-#	# rcx = height					#	
+#	# rdx = height					#	
 #							#
 #	--> Keine Rückgabe erwartet			#	
 #-------------------------------------------------------#
@@ -25,6 +26,7 @@ greyscale:
 	#r10 = counter for loop
 	#rsi = amountOfChannels
 	#r8 = calculating average
+	#height moved to rcx for devision 
 	
 
 	
@@ -37,7 +39,7 @@ greyscale:
 	
 
 
-	xor r10, r10 		#loop Counter = 0
+	xor r10, r10 		#loop Counter = 0Retry
 
 
 .Lloop:
@@ -88,43 +90,73 @@ greyscale:
 #							#
 #	# rdi = Adress pixel Array (Read and write)	#
 # 	# rsi = width					#	
-#	# rcx = height					#	
-#							#
+#	# rdx = height					#	
+#						#
 #	--> Keine Rückgabe erwartet			#	
 #-------------------------------------------------------#
 
 
 
-.global greyscale_simd
+
 greyscale_simd:
 
+	#xmm0 = Color channel
 
-	.Lconvert:
+ 	mov rcx, rdx 		#moved height for devision
 
-	#todo:
-	#Have to find simd operator
+ 	mov r10, rcx
+ 	imul r10, rsi
+ 	sub r10, 6      	#The last bits that do not fit
+ 	imul r10, 3			#Amount of channelsmultiply
+ 	xor r11, r11        #Counter for loading data
+ 	jmp .Lload #
+ 	jmp .Lload
+
+.Lconvert:
+
+
+	#movdqa xmm1, xmmword ptr[greyWeighting]
 
 
 
-	.Lload:
 	
+
+
+.Lload:
+
+	cmp r11, r10
+	jge .LlastPixels
+
+
+	movdqu xmm0, xmmword ptr[rdi + r11] #Could be potential problem with alignment
+
+
+
+
+
+
+
+	jmp .Lconvert
+	add r11, 45 #Amount of pixels * 3 that fit into a register
+	jmp .Lload
+
 	#todo:
 	#load only pixel row that fully fits into simd 
-	#do the rest with non simd
-
-
-	jmp greyscale 	#Temporary so that code does not fuck up 
+	#do the rest with non
 
 
 
-	.LlastPixels: 	#Pixels that do not fit into a simd
+.LlastPixels: 	#Pixels that do not fit into a simd
 
-	#todo:
-	#Make sure height and width are choosen correctly
-	#
+	mov rsi, 1
+	# mov rdx, how many pixels are left
+	#add rdi how many pixels where loaded and processed
+
+	jmp greyscale # Jump to grmultiplyey for pixels that do not fit
+		
 
 
-	#jmp
+	
 
 
 
