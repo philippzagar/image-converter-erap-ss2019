@@ -18,6 +18,7 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info);
 RGB* readPixels(FILE* inFile, BMPImageInfo* info);
 bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues);
 void convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info);
+void convolutionRGB(RGB* rgbValues, BMPImageInfo* info);
 
 // Main Routine
 int main(int argc, char** argv) {
@@ -97,7 +98,7 @@ int main(int argc, char** argv) {
     //greyscale(rgbValues, info->width, info->height);
 
     convertRGBtoGreyscale(rgbValues, info);
-    //convolutionRGB(rgbValues, info);
+    convolutionRGB(rgbValues, info);
 
 
 
@@ -361,6 +362,8 @@ void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
             {1, 2, 1}
     };
 
+
+
     // Variables
     int sumRed = 0;
     int sumGreen = 0;
@@ -370,33 +373,36 @@ void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
     char sumBlueChar;
 
     // Loop every pixel of image
-    for(int i = 0; i < info->height; i++) {
-        for(int j = 0; j < info->width; j++) {
-            // Calculate pointer to the current pixel
-            RGB* pointer = rgbValues + (i * info->width) + (j);
+    for(int currentHeigh = 0; currentHeigh < info->height; currentHeigh++) {
+        for(int currentWidth = 0; currentWidth < info->width; currentWidth++) {
 
-            printf("i: %i j: %i         ", i, j);
+            int helpPointer = (currentHeigh*info->width + currentWidth);
 
-            // Loop through kernel
+           // Loop through kernel
             for(int kerneli = -1; kerneli <= 1; kerneli++) {
                 for(int kernelj = -1; kernelj <= 1; kernelj++) {
                     // Check if the kernel is inside of the picture
-                    if(i + kerneli >= 0 && j + kernelj >= 0 &&
-                       i + kerneli < info->height && j + kernelj < info->width) {
+                    if(currentHeigh + kerneli >= 0 && currentWidth + kernelj >= 0 && // Skip the pixel otherwise --> value of 0
+                       currentHeigh + kerneli < info->height && currentWidth + kernelj < info->width) {
 
-                        printf("kerneli: %i kernelj: %i         ", kerneli, kernelj);
 
-                        RGB* helpPointer = pointer + kerneli * info->width + kernelj;
+
+
+                         int pixelNavigator = helpPointer +  kerneli*info->width + kernelj;
+
 
                         // Sum up
-                        sumRed += helpPointer->red * kernel[kerneli+1][kernelj+1];
-                        sumGreen += helpPointer->green * kernel[kerneli+1][kernelj+1];
-                        sumBlue += helpPointer->blue * kernel[kerneli+1][kernelj+1];
+                        sumRed += rgbValues[pixelNavigator].red * kernel[kerneli+1][kernelj+1];
+                        sumGreen += rgbValues[pixelNavigator].green * kernel[kerneli+1][kernelj+1];
+                        sumBlue += rgbValues[pixelNavigator].blue * kernel[kerneli+1][kernelj+1];
                     }
                 }
             }
 
-            // Devide
+
+
+
+            // Devide for average
             sumRed /= 16;
             sumGreen /= 16;
             sumBlue /= 16;
@@ -407,13 +413,12 @@ void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
             sumBlueChar = sumRed;
 
             // Write back to RGB value
-            pointer->red = sumRedChar;
-            pointer->green = sumGreenChar;
-            pointer->blue = sumBlueChar;
+            rgbValues[helpPointer].red = sumRedChar;
+            rgbValues[helpPointer].green = sumGreenChar;
+            rgbValues[helpPointer].red = sumBlueChar;
 
             // Set sums to 0
             sumRed = 0; sumGreen = 0; sumBlue = 0;
         }
     }
 }
-
