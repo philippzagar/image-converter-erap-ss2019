@@ -10,10 +10,10 @@
 unsigned char *raw_image = NULL;
 
 /* dimensions of the image we want to write */
-int width;
-int height;
-int bytes_per_pixel;   /* or 1 for GRACYSCALE images */
-int color_space; /* or JCS_GRAYSCALE for grayscale images */
+int _width;
+int _height;
+int _bytes_per_pixel;   /* or 1 for GRACYSCALE images */
+int _color_space; /* or JCS_GRAYSCALE for grayscale images */
 
 
 // Assembly Functions
@@ -29,8 +29,8 @@ BMPImageInfo* readInfo(FILE* inFile);
 bool checkBMPImage(BMPHeader* header, BMPImageInfo* info);
 RGB* readPixels(FILE* inFile, BMPImageInfo* info);
 bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues);
-void convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info);
-void convolutionRGB(RGB* rgbValues, BMPImageInfo* info);
+RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info);
+RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info);
 
 // Main Routine
 int main(int argc, char** argv) {
@@ -109,11 +109,8 @@ int main(int argc, char** argv) {
     // Convert to greyscale********************************************************************************************************************
     //greyscale(rgbValues, info->width, info->height);
 
-    convertRGBtoGreyscale(rgbValues, info);
-    convolutionRGB(rgbValues, info);
-
-
-
+    rgbValues = convertRGBtoGreyscale(rgbValues, info);
+    rgbValues = convolutionRGB(rgbValues, info);
 
     // Open file to write back the picture to memory
     outFile = fopen("./lena_grey.bmp", "wb");
@@ -341,7 +338,7 @@ bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbVa
 }
 
 // Convert RGB values to greyscale
-void convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
+RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
     // Constants
     float a = 0.3;
     float b = 0.3;
@@ -363,10 +360,12 @@ void convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
             rgbValues[i*info->width + j].blue = D;
         }
     }
+
+    return rgbValues;
 }
 
 // Convert RGB values to greyscale
-void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
+RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
     // Constants
     char kernel[3][3] = {
             {1, 2, 1},
@@ -374,7 +373,8 @@ void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
             {1, 2, 1}
     };
 
-
+    // Allocate new RGB array -> Values of old array are not overwritten (because of needing those pixels for convolution)
+    RGB* convolutionRGBValues = (RGB*) malloc(info->width * info->height * sizeof(RGB));
 
     // Variables
     int sumRed = 0;
@@ -397,11 +397,7 @@ void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
                     if(currentHeigh + kerneli >= 0 && currentWidth + kernelj >= 0 && // Skip the pixel otherwise --> value of 0
                        currentHeigh + kerneli < info->height && currentWidth + kernelj < info->width) {
 
-
-
-
-                         int pixelNavigator = helpPointer +  kerneli*info->width + kernelj;
-
+                        int pixelNavigator = helpPointer +  kerneli*info->width + kernelj;
 
                         // Sum up
                         sumRed += rgbValues[pixelNavigator].red * kernel[kerneli+1][kernelj+1];
@@ -410,9 +406,6 @@ void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
                     }
                 }
             }
-
-
-
 
             // Devide for average
             sumRed /= 16;
@@ -425,14 +418,16 @@ void convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
             sumBlueChar = sumRed;
 
             // Write back to RGB value
-            rgbValues[helpPointer].red = sumRedChar;
-            rgbValues[helpPointer].green = sumGreenChar;
-            rgbValues[helpPointer].red = sumBlueChar;
+            convolutionRGBValues[helpPointer].red = sumRedChar;
+            convolutionRGBValues[helpPointer].green = sumGreenChar;
+            convolutionRGBValues[helpPointer].red = sumBlueChar;
 
             // Set sums to 0
             sumRed = 0; sumGreen = 0; sumBlue = 0;
         }
     }
+
+    return convolutionRGBValues;
 }
 
 /**
