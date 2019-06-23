@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "./jpeg-6b/jpeglib.h>
+#include "./jpeg-6b/jpeglib.h"
 #include "BMPStructs.h"
 
 /*
