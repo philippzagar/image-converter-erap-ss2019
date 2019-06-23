@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "./jpeg-6b/jpeglib.h"
+//#include "./jpeg-6b/jpeglib.h"
 #include "BMPStructs.h"
 
 /*
@@ -439,7 +439,7 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
  *
  */
 
-/*
+
 int read_jpeg_file( char *filename )
 {
     // these are standard libjpeg structures for reading(decompression)
@@ -510,4 +510,3 @@ int main(int argc,char **argv)
     free(raw_image);
     return 0;
 }
- */
