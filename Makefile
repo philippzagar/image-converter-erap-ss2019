@@ -1,9 +1,9 @@
-CFLAGS=-g -Wall -Wextra -no-pie
+CFLAGS=-g -Wall -Wextra
 
 .PHONY: all
 all: BMP
 BMP: Program.c BMP.s
-    $(CC) $(CFLAGS) -o $@ $^
+    
 
 .PHONY: clean
 clean:
