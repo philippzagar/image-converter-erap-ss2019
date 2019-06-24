@@ -21,7 +21,7 @@ extern void greyscale(RGB *rgbValuesOut, int width, int height);
 void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
 
 
-extern void blur(FILE* in, FILE* out, int width, int height);
+extern void blur(RGB* in, RGB* out, int width, int height);
 
 // C Functions
 BMPHeader* readHeader(FILE* inFile);
@@ -107,10 +107,18 @@ int main(int argc, char** argv) {
     }
 
     // Convert to greyscale********************************************************************************************************************
-    //greyscale(rgbValues, info->width, info->height);
+    greyscale(rgbValues, info->width, info->height);
 
-    rgbValues = convertRGBtoGreyscale(rgbValues, info);
-    rgbValues = convolutionRGB(rgbValues, info);
+
+
+
+    // For Blur *******************************************************************************************************************************
+    //RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
+    //blur(RGB* rgbValues, RGB* out, int width, int height);
+    //rgbValues = out;
+
+
+    //rgbValues = convolutionRGB(rgbValues, info);
 
     // Open file to write back the picture to memory
     outFile = fopen("./lena_grey.bmp", "wb");
@@ -414,13 +422,13 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
 
             // Parse int to char
             sumRedChar = sumRed;
-            sumGreenChar = sumRed;
-            sumBlueChar = sumRed;
+            sumGreenChar = sumGreen;
+            sumBlueChar = sumBlue;
 
             // Write back to RGB value
             convolutionRGBValues[helpPointer].red = sumRedChar;
             convolutionRGBValues[helpPointer].green = sumGreenChar;
-            convolutionRGBValues[helpPointer].red = sumBlueChar;
+            convolutionRGBValues[helpPointer].blue = sumBlueChar;
 
             // Set sums to 0
             sumRed = 0; sumGreen = 0; sumBlue = 0;
