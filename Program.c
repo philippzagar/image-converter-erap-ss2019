@@ -18,7 +18,7 @@ int _color_space; // or JCS_GRAYSCALE for grayscale images
 
 // Assembly Functions
 extern void greyscale(RGB *rgbValuesOut, int width, int height);
-void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
+extern void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
 
 
 extern void blur(RGB* in, RGB* out, int width, int height);
@@ -114,8 +114,11 @@ int main(int argc, char** argv) {
 
     // For Blur *******************************************************************************************************************************
     RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
-    blur(RGB* rgbValues, RGB* out, int width, int height);
+    blur(rgbValues, out, info->width, info->height);
     rgbValues = out;
+    free(out);
+
+
 
 
     //rgbValues = convolutionRGB(rgbValues, info);
