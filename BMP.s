@@ -174,25 +174,28 @@ ret
 	# rcx = height
 
 blur:
-	push r15
+	push r15 #width
+	push rbx #iterator
 
-	mov r15, rdx #moved width for division                           drandenken dass alles verschoben sein kann wegen anderen parametern
-	
+	mov r15, rdx #moved width for division	
 	xor rdx, rdx
+		
 	
-	push rbx
-	
-	#register für Ränder###################	
-	push r12 #oberste Zeile
+	#Register, die als Markierung der Ränder benutzt werden#
+	#oberste Zeile
+	push r12
 	mov r12, rcx
 	dec r12
 	
-	push r13 #linkeste Spalte
+	#rechteste Spalte
+	push r13
 	mov r13, r15
-	dec r13	
-	#######################################
+	dec r13
 	
-	push r14 #speicherort für blurberechnung.......
+	#linkeste Spalte und unterste Zeile immer 1 (kein Register nötig)
+	##########################################################
+	
+	push r14 #speicherort für blurberechnung
 
 
 	xor r10, r10 #Height counter = 0
@@ -209,10 +212,6 @@ blur:
 	cmp r11, r15
 	jge .LincCounterHeight #if(r11 >= width)
 
-	mov rbx, r10 # which level we are on
-	imul rbx, r15 # Multiply by the pixels of before
-	add rbx, r11 # in which pixel we are
-
 	#Überprüfung auf Stelle in Matrix und vllt Weiterschicken
 	cmp r10, 0
 	je .LuntererRand
@@ -226,21 +225,28 @@ blur:
 	cmp r11, r13
 	je .LrechterRand
 	
-	#Operationen für mittlere Elemente
-	xor rax, rax
-	xor rdx, rdx
+	#Operationen für mittlere Elemente#######################################################################
 	xor r14, r14
 	
-	#mittleres Element
+	#mittleres Element############################################################
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx #nötig??
+	
+	mov rbx, r10 # which level we are on
+	imul rbx, r15 # Multiply by the pixels of before
+	add rbx, r11 # in which pixel we are
+	
 	imul rbx, 3 #nicht nur pixel sondern auch 3 farbkanäle berücksichtigen
 	
 	mov rax, 4
 	imul rax, [rdi + rbx]
 	add r14, rax
 	
-	#linkes Element
+	#linkes Element################################################################
 	xor rax, rax #nötig?
 	xor rdx, rdx
+	xor rbx, rbx #nötig??
 	
 	mov rbx, r10
 	imul rbx, r15
@@ -254,13 +260,105 @@ blur:
 	imul rax, [rdi + rbx]
 	add r14, rax
 	
-	#links oben Element
+	#links oben Element###############################################################
 	xor rax, rax
 	xor rdx, rdx
+	xor rbx, rbx #nötig??
+	
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+	
+	dec rbx #wegen linkes element
+	
+	imul rbx, 3
+	
+	mov rax, 1
+	imul rax, [rdi + rbx]
+	add r14, rax	
+	
+	#oben Element########################################################################
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx #nötig??
 	
 	inc r10
 	mov rbx, r10
 	dec r10
+	imul rbx, r15
+	add rbx, r11
+	
+	imul rbx, 3
+	
+	mov rax, 2
+	imul rax, [rdi + rbx]
+	add r14, rax
+	
+	#rechts oben Element#####################################################################
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx #nötig??
+	
+	inc r10
+	mov rbx, r10
+	dec r10
+	imul rbx, r15
+	add rbx, r11
+	
+	inc rbx
+	
+	imul rbx, 3
+	
+	mov rax, 1
+	imul rax, [rdi + rbx]
+	add r14, rax
+	
+	#rechts Element############################################################################
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx #nötig??
+	
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+	
+	inc rbx
+	
+	imul rbx, 3
+	
+	mov rax, 2
+	imul rax, [rdi + rbx]
+	add r14, rax
+	
+	#rechts unten Element######################################################################
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx #nötig??
+	
+	dec r10
+	mov rbx, r10
+	inc r10
+	imul rbx, r15
+	add rbx, r11
+	
+	inc rbx
+	
+	imul rbx, 3
+	
+	mov rax, 1
+	imul rax, [rdi + rbx]
+	add r14, rax
+	
+	#unten Element##############################################################################
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx #nötig??
+	
+	dec r10
+	mov rbx, r10
+	inc r10
 	imul rbx, r15
 	add rbx, r11
 	
@@ -268,101 +366,14 @@ blur:
 	
 	imul rbx, 3
 	
-	mov rax, 1
-	imul rax, [rdi + rbx]
-	add r14, rax
-	
-	
-	
-	#oben Element
-	xor rax, rax
-	xor rdx, rdx
-	
-	inc r10
-	mov rbx, r10
-	dec r10
-	imul rbx, r15
-	add rbx, r11
-	
-	imul rbx, 3
-	
 	mov rax, 2
 	imul rax, [rdi + rbx]
 	add r14, rax
 	
-	#rechts oben Element
+	#links unten Element##########################################################################
 	xor rax, rax
 	xor rdx, rdx
-	
-	inc r10
-	mov rbx, r10
-	dec r10
-	imul rbx, r15
-	add rbx, r11
-	
-	inc rbx
-	
-	imul rbx, 3
-	
-	mov rax, 1
-	imul rax, [rdi + rbx]
-	add r14, rax
-	
-	#rechts Element
-	xor rax, rax
-	xor rdx, rdx
-	
-	mov rbx, r10
-	imul rbx, r15
-	add rbx, r11
-	
-	inc rbx
-	
-	imul rbx, 3
-	
-	mov rax, 2
-	imul rax, [rdi + rbx]
-	add r14, rax
-	
-	#rechts unten Element
-	xor rax, rax
-	xor rdx, rdx
-	
-	dec r10
-	mov rbx, r10
-	inc r10
-	imul rbx, r15
-	add rbx, r11
-	
-	inc rbx
-	
-	imul rbx, 3
-	
-	mov rax, 1
-	imul rax, [rdi + rbx]
-	add r14, rax
-	
-	#unten Element
-	xor rax, rax
-	xor rdx, rdx
-	
-	dec r10
-	mov rbx, r10
-	inc r10
-	imul rbx, r15
-	add rbx, r11
-	
-	dec rbx
-	
-	imul rbx, 3
-	
-	mov rax, 2
-	imul rax, [rdi + rbx]
-	add r14, rax
-	
-	#links unten Element
-	xor rax, rax
-	xor rdx, rdx
+	xor rbx, rbx #nötig??
 	
 	dec r10
 	mov rbx, r10
@@ -382,6 +393,13 @@ blur:
 	
 	xor rax, rax
 	xor rdx, rdx
+	xor rbx, rbx
+	
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 # which level we are on
+	imul rbx, r15 # Multiply by the pixels of before
+	add rbx, r11 # in which pixel we are	
+	imul rbx, 3 #nicht nur pixel sondern auch 3 farbkanäle berücksichtigen
 	
 	mov rax, r14
 	mov r14, 16
@@ -391,7 +409,7 @@ blur:
 	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
 	mov [rsi + rbx], rax
 	mov [rsi + rbx + 1], rax
-	mov [rsi + rbx + 2], rax	
+	mov [rsi + rbx + 2], rax
 	
 	
 .Lrücksprung: #nötig falls Position nicht Mitte ist
