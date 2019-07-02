@@ -228,6 +228,7 @@ blur:
 	
 	#Operationen für mittlere Elemente
 	xor rax, rax
+	xor rdx, rdx
 	xor r14, r14
 	
 	#mittleres Element
@@ -239,6 +240,7 @@ blur:
 	
 	#linkes Element
 	xor rax, rax #nötig?
+	xor rdx, rdx
 	
 	mov rbx, r10
 	imul rbx, r15
@@ -254,6 +256,7 @@ blur:
 	
 	#links oben Element
 	xor rax, rax
+	xor rdx, rdx
 	
 	inc r10
 	mov rbx, r10
@@ -273,6 +276,7 @@ blur:
 	
 	#oben Element
 	xor rax, rax
+	xor rdx, rdx
 	
 	inc r10
 	mov rbx, r10
@@ -288,6 +292,7 @@ blur:
 	
 	#rechts oben Element
 	xor rax, rax
+	xor rdx, rdx
 	
 	inc r10
 	mov rbx, r10
@@ -305,6 +310,7 @@ blur:
 	
 	#rechts Element
 	xor rax, rax
+	xor rdx, rdx
 	
 	mov rbx, r10
 	imul rbx, r15
@@ -320,6 +326,7 @@ blur:
 	
 	#rechts unten Element
 	xor rax, rax
+	xor rdx, rdx
 	
 	dec r10
 	mov rbx, r10
@@ -337,6 +344,7 @@ blur:
 	
 	#unten Element
 	xor rax, rax
+	xor rdx, rdx
 	
 	dec r10
 	mov rbx, r10
@@ -354,6 +362,7 @@ blur:
 	
 	#links unten Element
 	xor rax, rax
+	xor rdx, rdx
 	
 	dec r10
 	mov rbx, r10
@@ -372,6 +381,7 @@ blur:
 	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
 	
 	xor rax, rax
+	xor rdx, rdx
 	
 	mov rax, r14
 	mov r14, 16
@@ -379,9 +389,9 @@ blur:
 	
 	#auf neuem pointer speichern...
 	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
-	mov [rsi + rbx], r14
-	mov [rsi + rbx + 1], r14
-	mov [rsi + rbx + 2], r14	
+	mov [rsi + rbx], rax
+	mov [rsi + rbx + 1], rax
+	mov [rsi + rbx + 2], rax	
 	
 	
 .Lrücksprung: #nötig falls Position nicht Mitte ist
