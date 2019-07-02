@@ -115,10 +115,10 @@ int main(int argc, char** argv) {
     // For Blur *******************************************************************************************************************************
     RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
     blur(rgbValues, out, info->width, info->height);
+
+    free(rgbValues);
+
     rgbValues = out;
-    free(out);
-
-
 
 
     //rgbValues = convolutionRGB(rgbValues, info);
