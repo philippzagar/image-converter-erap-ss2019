@@ -212,7 +212,7 @@ blur:
 	cmp r11, r15
 	jge .LincCounterHeight #if(r11 >= width)
 
-	#Überprüfung auf Stelle in Matrix und vllt Weiterschicken
+	#Überprüfung auf Stelle in Matrix und vllt Weiterschicken##################
 	cmp r10, 0
 	je .LuntererRand
 	
@@ -224,11 +224,12 @@ blur:
 	
 	cmp r11, r13
 	je .LrechterRand
+	###########################################################################
 	
-	#Operationen für mittlere Elemente#######################################################################
+	#Operationen für mittlere Elemente#############################################################
 	xor r14, r14
 	
-	#mittleres Element############################################################
+	#mittleres Element#########################################################
 	xor rax, rax
 	xor rdx, rdx
 	xor rbx, rbx #nötig??
@@ -277,16 +278,16 @@ blur:
 	
 	mov rax, 1
 	imul rax, [rdi + rbx]
-	add r14, rax	
+	add r14, rax
 	
 	#oben Element########################################################################
 	xor rax, rax
 	xor rdx, rdx
 	xor rbx, rbx #nötig??
 	
-	inc r10
+	inc r10 #wegen oben Element
 	mov rbx, r10
-	dec r10
+	dec r10 #wegen oben Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 	
@@ -301,13 +302,13 @@ blur:
 	xor rdx, rdx
 	xor rbx, rbx #nötig??
 	
-	inc r10
+	inc r10 #wegen oben Element
 	mov rbx, r10
-	dec r10
+	dec r10 #wegen oben Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 	
-	inc rbx
+	inc rbx #wegen rechts
 	
 	imul rbx, 3
 	
@@ -324,7 +325,7 @@ blur:
 	imul rbx, r15
 	add rbx, r11
 	
-	inc rbx
+	inc rbx #wegen rechts
 	
 	imul rbx, 3
 	
@@ -337,13 +338,13 @@ blur:
 	xor rdx, rdx
 	xor rbx, rbx #nötig??
 	
-	dec r10
+	dec r10 #wegen unten
 	mov rbx, r10
-	inc r10
+	inc r10 #wegen unten Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 	
-	inc rbx
+	inc rbx #wegen rechts
 	
 	imul rbx, 3
 	
@@ -356,13 +357,11 @@ blur:
 	xor rdx, rdx
 	xor rbx, rbx #nötig??
 	
-	dec r10
+	dec r10 #wegen unten
 	mov rbx, r10
-	inc r10
+	inc r10 #wegen unten Element rückgängig
 	imul rbx, r15
 	add rbx, r11
-	
-	dec rbx
 	
 	imul rbx, 3
 	
@@ -375,13 +374,13 @@ blur:
 	xor rdx, rdx
 	xor rbx, rbx #nötig??
 	
-	dec r10
+	dec r10 #wegen unten
 	mov rbx, r10
-	inc r10
+	inc r10 #wegen unten Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 	
-	dec rbx
+	dec rbx #wegen links
 	
 	imul rbx, 3
 	
