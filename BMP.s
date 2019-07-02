@@ -379,7 +379,7 @@ blur:
 	imul rbx, 3
 
 	mov al, [rdi + rbx]
-	imul rax, [rdi + rbx]
+	imul rax, 1
 	add r14, rax
 
 	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
