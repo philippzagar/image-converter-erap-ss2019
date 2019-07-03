@@ -183,18 +183,9 @@ blur:
 	xor rdx, rdx
 
 
-	#Register, die als Markierung der Ränder benutzt werden#
-	#oberste Zeile
-	push r12
-	#mov r12, rcx 	#Height
-	#dec r1r122
+	push r12 #Saves the value for division
 
-	#rechteste Spalte
-	push r13
-	mov r13, r15	#Width
-	dec r13
 
-	#linkeste Spalte und unterste Zeile immer 1 (kein Register nötig)
 
 	push r14 			#speicherort für blurberechnung
 
@@ -219,6 +210,7 @@ blur:
 	#*************************Normal Pixels**************************************
 	xor r14, r14
 
+.lmitte:
 	#mittleres Element##################
 	xor rax, rax
 	xor rdx, rdx
@@ -235,14 +227,16 @@ blur:
 	add r14, rax
 	add r12, 4
 
+.Llinks:
 	#linkes Element#####################
 	xor rax, rax
 	xor rdx, rdx
 
+	# check if left pixel exists
 	mov rbx, r11
 	dec rbx
 	cmp rbx, 0
-	jl .LlinksOben
+	jl .Lrechts # If pixel (-1) does not exist jump to next pixel
 
 	mov rbx, r10
 	imul rbx, r15
@@ -256,97 +250,18 @@ blur:
 	imul rax, 2
 	add r14, rax
 	add r12, 2
-.LlinksOben:
-	#links oben Element###############################################################
-	xor rax, rax
-	xor rdx, rdx
 
 
-	mov rbx, r10
-	inc rbx
-	cmp rbx, rcx
-	jge .Loben
-
-	mov rbx, r11
-	dec rbx
-	cmp rbx, 0
-	jl .Loben
-
-	inc r10 #wegen oben Element
-	mov rbx, r10
-	dec r10 #wegen oben Element rückgängig
-	imul rbx, r15
-	add rbx, r11
-
-	dec rbx #wegen linkes element
-
-	imul rbx, 3
-
-	mov al, [rdi + rbx]
-	imul rax, 1
-	add r14, rax
-	add r12, 1
-.Loben:
-	#oben Element########################################################################
-	xor rax, rax
-	xor rdx, rdx
-
-	mov rbx, r10
-	inc rbx
-	cmp rbx, rcx
-	jge .LrechstOben
-
-	inc r10 #wegen oben Element
-	mov rbx, r10
-	dec r10 #wegen oben Element rückgängig
-	imul rbx, r15
-	add rbx, r11
-
-	imul rbx, 3
-
-	mov al, [rdi + rbx]
-	imul rax, 2
-	add r14, rax
-	add r12, 2
-.LrechstOben:
-	#rechts oben Element#####################################################################
-	xor rax, rax
-	xor rdx, rdx
-
-	mov rbx, r10
-	inc rbx
-	cmp rbx, rcx
-	jg .Lrechts
-
-	mov rbx, r11
-	inc rbx
-	cmp rbx, r15
-	jge .Lrechts
-
-
-	inc r10 #wegen oben Element
-	mov rbx, r10
-	dec r10 #wegen oben Element rückgängig
-	imul rbx, r15
-	add rbx, r11
-
-	inc rbx #wegen rechts
-
-	imul rbx, 3
-
-	mov al, [rdi + rbx]
-	imul rax, 1
-	add r14, rax
-	add r12, 1
 .Lrechts:
 	#rechts Element############################################################################
 	xor rax, rax
 	xor rdx, rdx
 
+	#Check if right pixel exists
 	mov rbx, r11
 	inc rbx
 	cmp rbx, r15
-	jge .LrechtsUnten
+	jge .LobenMitte
 
 
 	mov rbx, r10
@@ -361,25 +276,75 @@ blur:
 	imul rax, 2
 	add r14, rax
 	add r12, 2
-.LrechtsUnten:
-	#rechts unten Element######################################################################
+
+.LobenMitte:
+	#oben Element########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	#Check if pixel above exists
+	mov rbx, r10
+	inc rbx
+	cmp rbx, rcx
+	jge .LuntenMitte # Because top row does not exist skip checking others
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+	add r12, 2
+
+
+.LobenLinks:
+	#links oben Element###############################################################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	#Check if left top pixel exists(only have to check left because we know level exists)
+	mov rbx, r11
+	dec rbx
+	cmp rbx, 0
+	jl .LobenRechts #Check if right pixel exists
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+	add r12, 1
+
+
+
+.LobenRechts:
+	#rechts oben Element#####################################################################
 	xor rax, rax
 	xor rdx, rdx
 
 	mov rbx, r11
 	inc rbx
 	cmp rbx, r15
-	jge .Lunten
+	jge .LuntenMitte
 
+
+	inc r10 #wegen oben Element
 	mov rbx, r10
-	dec rbx
-	cmp rbx, 0
-	jle .Lunten
-
-
-	dec r10 #wegen unten
-	mov rbx, r10
-	inc r10 #wegen unten Element rückgängig
+	dec r10 #wegen oben Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 
@@ -391,7 +356,9 @@ blur:
 	imul rax, 1
 	add r14, rax
 	add r12, 1
-.Lunten:
+
+
+.LuntenMitte:
 	#unten Element##############################################################################
 	xor rax, rax
 	xor rdx, rdx
@@ -399,7 +366,7 @@ blur:
 	mov rbx, r10
 	dec rbx
 	cmp rbx, 0
-	jle .Llinksunten
+	jle .LwriteBlur #da unteres level nicht existiert
 
 	dec r10 #wegen unten
 	mov rbx, r10
@@ -413,25 +380,17 @@ blur:
 	imul rax, 2
 	add r14, rax
 	add r12, 2
-.Llinksunten:
+
+.LuntenLinks:
 	#links unten Element##########################################################################
 	xor rax, rax
 	xor rdx, rdx
-
-	mov rbx, r10
-	dec rbx
-	cmp rbx, 0
-	jle .LwriteBlur
 
 
 	mov rbx, r11
 	dec rbx
 	cmp rbx, 0
-	jle .LwriteBlur
-
-
-
-
+	jle .LuntenRechts
 
 	dec r10 #wegen unten
 	mov rbx, r10
@@ -448,7 +407,34 @@ blur:
 	add r14, rax
 	add r12, 1
 
-	.LwriteBlur:
+
+.LuntenRechts:
+	#rechts unten Element######################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r11
+	inc rbx
+	cmp rbx, r15
+	jge .LwriteBlur
+
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+	add r12, 1
+
+.LwriteBlur:
 
 	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
 
@@ -487,7 +473,6 @@ blur:
 .Lendd:
 
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop r15
