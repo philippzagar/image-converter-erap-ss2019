@@ -170,52 +170,52 @@ ret
 
 # void blur(RGB* in, RGB* out, int width, int height)
 
-  # rdi = Adress for greyscale data
+	# rdi = Adress for greyscale data
  	# rsi = Adress for writing data back
 	# rdx = width  --> r15 (otherwise problem with division)
 	# rcx = height
 
 blur:
-	push r15 			# width
-	push rbx 			# For adressing pixels
+	push r15 				# width
+	push rbx 				# For adressing pixels
 
-	mov r15, rdx 	# moved width for division
+	mov r15, rdx 			# moved width for division
 	xor rdx, rdx
 
 
-	push r12 			# Save the value for division
-	push r14 			#	speicherort für blurberechnung
+	push r12 				# save the value for division
+	push r14 				# speicherort für blurberechnung
 
 
-	xor r10, r10 	#Height counter = 0
+	xor r10, r10 			#Height counter = 0
 
 
 .LloopHeight:
 
 	cmp r10, rcx
-	jge .Lendd		#if(r10 >= height)
-	xor r11, r11 	#Width counter = 0
+	jge .Lendd				#if(r10 >= height)
+	xor r11, r11 			#Width counter = 0
 
 
-.Lloopwidth:
+.LloopWidth:
 	xor r12, r12
 	cmp r11, r15
-	jge .LincCounterHeight #if(r11 >= width)
+	jge .LincCounterHeight 	#if(r11 >= width)
 
 
 
-	#******************************** Pixels**************************************
+	#******************************** Pixels*********************************************
 	xor r14, r14 			# For collecting all pixelvalues
 	xor r12, r12 			# For collecting weightiung factors
 
 .lmitte:
-	#mittleres Element (2,2)##################################
+	#mittleres Element (2,2)#############################################################
 	xor rax, rax
 	xor rdx, rdx
 
 
 	mov rbx, r10 			# which level we are on
-	imul rbx, r15 		# Multiply by Width --> all pixels before
+	imul rbx, r15 			# Multiply by Width --> all pixels before
 	add rbx, r11 			# in which pixel we are
 
 	imul rbx, 3 			# 3 Byte per pixel
@@ -223,10 +223,10 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 4
 	add r14, rax
-	add r12, 4	  		# add for devision to make the average
+	add r12, 4	  			# add for devision to make the average
 
 .Llinks:
-	#linkes Element (2,1)#####################################
+	#linkes Element (2,1)################################################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -240,7 +240,7 @@ blur:
 	imul rbx, r15
 	add rbx, r11
 
-	dec rbx 					# wegen linkes element
+	dec rbx 				# wegen linkes element
 
 	imul rbx, 3
 
@@ -251,7 +251,7 @@ blur:
 
 
 .Lrechts:
-	#rechts Element (2,3)#####################################
+	#rechts Element (2,3)################################################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -266,7 +266,7 @@ blur:
 	imul rbx, r15
 	add rbx, r11
 
-	inc rbx 					# wegen rechts
+	inc rbx 				# wegen rechts
 
 	imul rbx, 3
 
@@ -276,7 +276,7 @@ blur:
 	add r12, 2				# add for devision to make the average
 
 .LobenMitte:
-	#oben Element (1,2)#######################################
+	#oben Element (1,2)##################################################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -284,11 +284,11 @@ blur:
 	mov rbx, r10
 	inc rbx
 	cmp rbx, rcx
-	jge .LuntenMitte # Because top row does not exist skip checking left and right
+	jge .LuntenMitte 		# Because top row does not exist skip checking left and right
 
-	inc r10 #wegen oben Element
+	inc r10 				#wegen oben Element
 	mov rbx, r10
-	dec r10 #wegen oben Element rückgängig
+	dec r10 				#wegen oben Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 
@@ -297,11 +297,11 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
-	add r12, 2 			# add for devision to make the average
+	add r12, 2 				# add for devision to make the average
 
 
 .LobenLinks:
-	#links oben Element (1,1)#################################
+	#links oben Element (1,1)############################################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -310,7 +310,7 @@ blur:
 	mov rbx, r11
 	dec rbx
 	cmp rbx, 0
-	jl .LobenRechts # Check if right pixel exists
+	jl .LobenRechts 		# Check if right pixel exists
 
 	inc r10 				# wegen oben Element
 	mov rbx, r10
@@ -325,12 +325,12 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
-	add r12, 1 			# add for devision to make the average
+	add r12, 1 				# add for devision to make the average
 
 
 
 .LobenRechts:
-	#rechts oben Element (1,3)################################
+	#rechts oben Element (1,3)###########################################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -354,11 +354,11 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
-	add r12, 1			# add for devision to make the average
+	add r12, 1				# add for devision to make the average
 
 
 .LuntenMitte:
-	#unten Element (3,2)######################################
+	#unten Element (3,2)#################################################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -379,10 +379,10 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
-	add r12, 2			# add for devision to make the average
+	add r12, 2				# add for devision to make the average
 
 .LuntenLinks:
-	#links unten Element (3,1)################################
+	#links unten Element (3,1)###########################################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -405,11 +405,11 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
-	add r12, 1			# add for devision to make the average
+	add r12, 1				# add for devision to make the average
 
 
 .LuntenRechts:
-	#rechts unten Element (3,3)###############################
+	#rechts unten Element (3,3)##########################################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -417,10 +417,10 @@ blur:
 	mov rbx, r11
 	inc rbx
 	cmp rbx, r15
-	jge .LwriteBlur # no more pixels for testing
+	jge .LwriteBlur 		# no more pixels for testing
 
 
-	dec r10 #wegen unten
+	dec r10 				# wegen unten
 	mov rbx, r10
 	inc r10 				# wegen unten Element rückgängig
 	imul rbx, r15
@@ -433,9 +433,9 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
-	add r12, 1			# add for devision to make the average
+	add r12, 1				# add for devision to make the average
 
-#*******************calculating avg and writing data***************************
+#*******************calculating avg and writing data*************************************
 .LwriteBlur:
 
 	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
@@ -443,11 +443,11 @@ blur:
 	xor rax, rax
 	xor rdx, rdx
 
-	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
-	mov rbx, r10 		# which level we are on[rdi + rbx]
-	imul rbx, r15 	# Multiply by the pixels of before
-	add rbx, r11 		# in which pixel we are
-	imul rbx, 3		  # 3 Byte per pixel
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!
+	mov rbx, r10 			# which level we are on[rdi + rbx]
+	imul rbx, r15 			# Multiply by the pixels of before
+	add rbx, r11 			# in which pixel we are
+	imul rbx, 3		  		# 3 Byte per pixel
 
 	mov rax, r14
 
@@ -455,14 +455,13 @@ blur:
 
 
 	# writing data back
-	mov [rsi + rbx], al			# Blue
+	mov [rsi + rbx], al		# Blue
 	mov [rsi + rbx + 1], al	# Green
 	mov [rsi + rbx + 2], al	# Red
 
-
-.Lrücksprung: #nötig falls Position nicht Mitte ist
+	# LloopWidth erhöhen
 	inc r11
-	jmp .Lloopwidth
+	jmp .LloopWidth
 
 
 .LincCounterHeight:
