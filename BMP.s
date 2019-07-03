@@ -414,19 +414,141 @@ blur:
 	inc r10
 	jmp .LloopHeight
 
-#*************************Special Case implementation***************************
+#*************************Special Case implementation**************************
 
 
-#Ränder                                      (erstmal übersprungen, kann probleme im output erzeugen weil gar nicht drin , hoffenltihc als 0 drin)
+#Ränder########################################################################
 .LuntererRand:
-#Überprüfung ob Ecke
+	#Überprüfung ob Ecke
 	cmp r11, 0
 	je .LlinkeUnterEcke
 
 	cmp r11, r13
 	je .LrechteUnterEcke
 
+	xor r14, r14
 
+	#mittleres Element##################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	mov rbx, r10 	# which level we are on
+	imul rbx, r15 # Multiply by Width --> all pixels before
+	add rbx, r11 	# in which pixel we are
+
+	imul rbx, 3 	# 3 Byte per pixel
+
+	mov al, [rdi + rbx]
+	imul rax, 4
+	add r14, rax
+
+	#linkes Element#####################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#links oben Element###############################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#oben Element########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#rechts oben Element#####################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#rechts Element############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
+
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx
+
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 		# which level we are on[rdi + rbx]
+	imul rbx, r15 	# Multiply by the pixels of before
+	add rbx, r11 		# in which pixel we are
+	imul rbx, 3		  # 3 Byte per pixel
+
+	mov rax, r14
+	mov r14, 12
+	idiv r14 				#alles durch 16 teilen
+
+	#auf neuem pointer speichern...
+	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
+	mov [rsi + rbx], al		#Blue
+	mov [rsi + rbx + 1], al	#Green
+	mov [rsi + rbx + 2], al	#Red
 
 	jmp .Lrücksprung
 
@@ -439,44 +561,771 @@ blur:
 	cmp r11, r13
 	je .LrechteObereEcke
 
+	xor r14, r14
 
+	#mittleres Element##################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	mov rbx, r10 	# which level we are on
+	imul rbx, r15 # Multiply by Width --> all pixels before
+	add rbx, r11 	# in which pixel we are
+
+	imul rbx, 3 	# 3 Byte per pixel
+
+	mov al, [rdi + rbx]
+	imul rax, 4
+	add r14, rax
+
+	#linkes Element#####################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#rechts Element############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#rechts unten Element######################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#unten Element##############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#links unten Element##########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen links
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
+
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx
+
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 		# which level we are on[rdi + rbx]
+	imul rbx, r15 	# Multiply by the pixels of before
+	add rbx, r11 		# in which pixel we are
+	imul rbx, 3		  # 3 Byte per pixel
+
+	mov rax, r14
+	mov r14, 12
+	idiv r14 				#alles durch 16 teilen
+
+	#auf neuem pointer speichern...
+	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
+	mov [rsi + rbx], al			#Blue
+	mov [rsi + rbx + 1], al	#Green
+	mov [rsi + rbx + 2], al	#Red
 
 	jmp .Lrücksprung
 
 .LlinkerRand:
 	#Überprüfung auf Ecke unnötig sonst schon in einen der Ränder gelandet
+	
+	xor r14, r14
+
+	#mittleres Element##################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	mov rbx, r10 	# which level we are on
+	imul rbx, r15 # Multiply by Width --> all pixels before
+	add rbx, r11 	# in which pixel we are
+
+	imul rbx, 3 	# 3 Byte per pixel
+
+	mov al, [rdi + rbx]
+	imul rax, 4
+	add r14, rax
+
+	#oben Element########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#rechts oben Element#####################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#rechts Element############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#rechts unten Element######################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#unten Element##############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
+
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx
+
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 		# which level we are on[rdi + rbx]
+	imul rbx, r15 	# Multiply by the pixels of before
+	add rbx, r11 		# in which pixel we are
+	imul rbx, 3		  # 3 Byte per pixel
+
+	mov rax, r14
+	mov r14, 12
+	idiv r14 				#alles durch 16 teilen
+
+	#auf neuem pointer speichern...
+	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
+	mov [rsi + rbx], al			#Blue
+	mov [rsi + rbx + 1], al	#Green
+	mov [rsi + rbx + 2], al	#Red
+	
 	jmp .Lrücksprung
 
 .LrechterRand:
 	#Überprüfung auf Ecke unnötig sonst schon in einen der Ränder gelandet
+	
+	xor r14, r14
+
+	#mittleres Element##################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	mov rbx, r10 	# which level we are on
+	imul rbx, r15 # Multiply by Width --> all pixels before
+	add rbx, r11 	# in which pixel we are
+
+	imul rbx, 3 	# 3 Byte per pixel
+
+	mov al, [rdi + rbx]
+	imul rax, 4
+	add r14, rax
+
+	#linkes Element#####################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#links oben Element###############################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#oben Element########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#unten Element##############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#links unten Element##########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen links
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
+
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx
+
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 		# which level we are on[rdi + rbx]
+	imul rbx, r15 	# Multiply by the pixels of before
+	add rbx, r11 		# in which pixel we are
+	imul rbx, 3		  # 3 Byte per pixel
+
+	mov rax, r14
+	mov r14, 12
+	idiv r14 				#alles durch 16 teilen
+
+	#auf neuem pointer speichern...
+	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
+	mov [rsi + rbx], al			#Blue
+	mov [rsi + rbx + 1], al	#Green
+	mov [rsi + rbx + 2], al	#Red
+	
 	jmp .Lrücksprung
 
 #Ecken
 .LlinkeUnterEcke:
+
+	xor r14, r14
+
+	#mittleres Element##################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	mov rbx, r10 	# which level we are on
+	imul rbx, r15 # Multiply by Width --> all pixels before
+	add rbx, r11 	# in which pixel we are
+
+	imul rbx, 3 	# 3 Byte per pixel
+
+	mov al, [rdi + rbx]
+	imul rax, 4
+	add r14, rax
+
+	#oben Element########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#rechts oben Element#####################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#rechts Element############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
+
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx
+
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 		# which level we are on[rdi + rbx]
+	imul rbx, r15 	# Multiply by the pixels of before
+	add rbx, r11 		# in which pixel we are
+	imul rbx, 3		  # 3 Byte per pixel
+
+	mov rax, r14
+	mov r14, 9
+	idiv r14 				#alles durch 16 teilen
+
+	#auf neuem pointer speichern...
+	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
+	mov [rsi + rbx], al			#Blue
+	mov [rsi + rbx + 1], al	#Green
+	mov [rsi + rbx + 2], al	#Red
 
 	jmp .Lrücksprung
 
 
 .LrechteUnterEcke:
 
+	xor r14, r14
+
+	#mittleres Element##################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	mov rbx, r10 	# which level we are on
+	imul rbx, r15 # Multiply by Width --> all pixels before
+	add rbx, r11 	# in which pixel we are
+
+	imul rbx, 3 	# 3 Byte per pixel
+
+	mov al, [rdi + rbx]
+	imul rax, 4
+	add r14, rax
+
+	#linkes Element#####################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#links oben Element###############################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#oben Element########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	inc r10 #wegen oben Element
+	mov rbx, r10
+	dec r10 #wegen oben Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
+
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx
+
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 		# which level we are on[rdi + rbx]
+	imul rbx, r15 	# Multiply by the pixels of before
+	add rbx, r11 		# in which pixel we are
+	imul rbx, 3		  # 3 Byte per pixel
+
+	mov rax, r14
+	mov r14, 9
+	idiv r14 				#alles durch 16 teilen
+
+	#auf neuem pointer speichern...
+	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
+	mov [rsi + rbx], al			#Blue
+	mov [rsi + rbx + 1], al	#Green
+	mov [rsi + rbx + 2], al	#Red
+
 	jmp .Lrücksprung
 
 
 .LlinkeObereEcke:
+
+	xor r14, r14
+
+	#mittleres Element##################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	mov rbx, r10 	# which level we are on
+	imul rbx, r15 # Multiply by Width --> all pixels before
+	add rbx, r11 	# in which pixel we are
+
+	imul rbx, 3 	# 3 Byte per pixel
+
+	mov al, [rdi + rbx]
+	imul rax, 4
+	add r14, rax
+
+	#rechts Element############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#rechts unten Element######################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	inc rbx #wegen rechts
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#unten Element##############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
+
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx
+
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 		# which level we are on[rdi + rbx]
+	imul rbx, r15 	# Multiply by the pixels of before
+	add rbx, r11 		# in which pixel we are
+	imul rbx, 3		  # 3 Byte per pixel
+
+	mov rax, r14
+	mov r14, 9
+	idiv r14 				#alles durch 16 teilen
+
+	#auf neuem pointer speichern...
+	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
+	mov [rsi + rbx], al			#Blue
+	mov [rsi + rbx + 1], al	#Green
+	mov [rsi + rbx + 2], al	#Red
 
 	jmp .Lrücksprung
 
 
 .LrechteObereEcke:
 
+	xor r14, r14
+
+	#mittleres Element##################
+	xor rax, rax
+	xor rdx, rdx
+
+
+	mov rbx, r10 	# which level we are on
+	imul rbx, r15 # Multiply by Width --> all pixels before
+	add rbx, r11 	# in which pixel we are
+
+	imul rbx, 3 	# 3 Byte per pixel
+
+	mov al, [rdi + rbx]
+	imul rax, 4
+	add r14, rax
+
+	#linkes Element#####################
+	xor rax, rax
+	xor rdx, rdx
+
+	mov rbx, r10
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen linkes element
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#unten Element##############################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 2
+	add r14, rax
+
+	#links unten Element##########################################################################
+	xor rax, rax
+	xor rdx, rdx
+
+	dec r10 #wegen unten
+	mov rbx, r10
+	inc r10 #wegen unten Element rückgängig
+	imul rbx, r15
+	add rbx, r11
+
+	dec rbx #wegen links
+
+	imul rbx, 3
+
+	mov al, [rdi + rbx]
+	imul rax, 1
+	add r14, rax
+
+	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
+
+	xor rax, rax
+	xor rdx, rdx
+	xor rbx, rbx
+
+	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
+	mov rbx, r10 		# which level we are on[rdi + rbx]
+	imul rbx, r15 	# Multiply by the pixels of before
+	add rbx, r11 		# in which pixel we are
+	imul rbx, 3		  # 3 Byte per pixel
+
+	mov rax, r14
+	mov r14, 9
+	idiv r14 				#alles durch 16 teilen
+
+	#auf neuem pointer speichern...
+	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
+	mov [rsi + rbx], al			#Blue
+	mov [rsi + rbx + 1], al	#Green
+	mov [rsi + rbx + 2], al	#Red
+
 	jmp .Lrücksprung
 
 
 .Lendd:
 
-pop r14
-pop r13
-pop r12
-pop rbx
-pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop r15
 ret
