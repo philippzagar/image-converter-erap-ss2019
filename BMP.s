@@ -176,18 +176,15 @@ ret
 	# rcx = height
 
 blur:
-	push r15 			#width
-	push rbx 			#iterator
+	push r15 			# width
+	push rbx 			# For adressing pixels
 
-	mov r15, rdx 	#moved width for division
+	mov r15, rdx 	# moved width for division
 	xor rdx, rdx
 
 
-	push r12 #Saves the value for division
-
-
-
-	push r14 			#speicherort für blurberechnung
+	push r12 			# Save the value for division
+	push r14 			#	speicherort für blurberechnung
 
 
 	xor r10, r10 	#Height counter = 0
@@ -207,53 +204,54 @@ blur:
 
 
 
-	#*************************Normal Pixels**************************************
-	xor r14, r14
+	#******************************** Pixels**************************************
+	xor r14, r14 			# For collecting all pixelvalues
+	xor r12, r12 			# For collecting weightiung factors
 
 .lmitte:
-	#mittleres Element##################
+	#mittleres Element (2,2)##################################
 	xor rax, rax
 	xor rdx, rdx
 
 
-	mov rbx, r10 	# which level we are on
-	imul rbx, r15 # Multiply by Width --> all pixels before
-	add rbx, r11 	# in which pixel we are
+	mov rbx, r10 			# which level we are on
+	imul rbx, r15 		# Multiply by Width --> all pixels before
+	add rbx, r11 			# in which pixel we are
 
-	imul rbx, 3 	# 3 Byte per pixel
+	imul rbx, 3 			# 3 Byte per pixel
 
 	mov al, [rdi + rbx]
 	imul rax, 4
 	add r14, rax
-	add r12, 4
+	add r12, 4	  		# add for devision to make the average
 
 .Llinks:
-	#linkes Element#####################
+	#linkes Element (2,1)#####################################
 	xor rax, rax
 	xor rdx, rdx
 
 	# check if left pixel exists
 	mov rbx, r11
 	dec rbx
-	cmp rbx, 0
-	jl .Lrechts # If pixel (-1) does not exist jump to next pixel
+	cmp rbx, 0				# if(rbx < 0)
+	jl .Lrechts 			# If pixel (-1) does not exist jump to next pixel
 
 	mov rbx, r10
 	imul rbx, r15
 	add rbx, r11
 
-	dec rbx #wegen linkes element
+	dec rbx 					# wegen linkes element
 
 	imul rbx, 3
 
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
-	add r12, 2
+	add r12, 2				# add for devision to make the average
 
 
 .Lrechts:
-	#rechts Element############################################################################
+	#rechts Element (2,3)#####################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -268,17 +266,17 @@ blur:
 	imul rbx, r15
 	add rbx, r11
 
-	inc rbx #wegen rechts
+	inc rbx 					# wegen rechts
 
 	imul rbx, 3
 
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
-	add r12, 2
+	add r12, 2				# add for devision to make the average
 
 .LobenMitte:
-	#oben Element########################################################################
+	#oben Element (1,2)#######################################
 	xor rax, rax
 	xor rdx, rdx
 
@@ -286,7 +284,7 @@ blur:
 	mov rbx, r10
 	inc rbx
 	cmp rbx, rcx
-	jge .LuntenMitte # Because top row does not exist skip checking others
+	jge .LuntenMitte # Because top row does not exist skip checking left and right
 
 	inc r10 #wegen oben Element
 	mov rbx, r10
@@ -299,78 +297,80 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
-	add r12, 2
+	add r12, 2 			# add for devision to make the average
 
 
 .LobenLinks:
-	#links oben Element###############################################################
+	#links oben Element (1,1)#################################
 	xor rax, rax
 	xor rdx, rdx
 
 
-	#Check if left top pixel exists(only have to check left because we know level exists)
+	#Check if left top pixel exists
 	mov rbx, r11
 	dec rbx
 	cmp rbx, 0
-	jl .LobenRechts #Check if right pixel exists
+	jl .LobenRechts # Check if right pixel exists
 
-	inc r10 #wegen oben Element
+	inc r10 				# wegen oben Element
 	mov rbx, r10
-	dec r10 #wegen oben Element rückgängig
+	dec r10 				# wegen oben Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 
-	dec rbx #wegen linkes element
+	dec rbx 				# wegen linkes element
 
 	imul rbx, 3
 
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
-	add r12, 1
+	add r12, 1 			# add for devision to make the average
 
 
 
 .LobenRechts:
-	#rechts oben Element#####################################################################
+	#rechts oben Element (1,3)################################
 	xor rax, rax
 	xor rdx, rdx
 
+	#Check if right pixel exists
 	mov rbx, r11
 	inc rbx
 	cmp rbx, r15
 	jge .LuntenMitte
 
 
-	inc r10 #wegen oben Element
+	inc r10 				# wegen oben Element
 	mov rbx, r10
-	dec r10 #wegen oben Element rückgängig
+	dec r10 				# wegen oben Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 
-	inc rbx #wegen rechts
+	inc rbx 				# wegen rechts
 
 	imul rbx, 3
 
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
-	add r12, 1
+	add r12, 1			# add for devision to make the average
 
 
 .LuntenMitte:
-	#unten Element##############################################################################
+	#unten Element (3,2)######################################
 	xor rax, rax
 	xor rdx, rdx
 
+	#Check if row below exists
 	mov rbx, r10
 	dec rbx
 	cmp rbx, 0
-	jle .LwriteBlur #da unteres level nicht existiert
+	jle .LwriteBlur # da unteres level nicht existiert
 
 	dec r10 #wegen unten
 	mov rbx, r10
-	inc r10 #wegen unten Element rückgängig
+	inc r10 				# wegen unten Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 
@@ -379,68 +379,69 @@ blur:
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
-	add r12, 2
+	add r12, 2			# add for devision to make the average
 
 .LuntenLinks:
-	#links unten Element##########################################################################
+	#links unten Element (3,1)################################
 	xor rax, rax
 	xor rdx, rdx
 
-
+	#Check if left element exists
 	mov rbx, r11
 	dec rbx
 	cmp rbx, 0
 	jle .LuntenRechts
 
-	dec r10 #wegen unten
+	dec r10 				# wegen unten
 	mov rbx, r10
-	inc r10 #wegen unten Element rückgängig
+	inc r10 				# wegen unten Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 
-	dec rbx #wegen links
+	dec rbx 				# wegen links
 
 	imul rbx, 3
 
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
-	add r12, 1
+	add r12, 1			# add for devision to make the average
 
 
 .LuntenRechts:
-	#rechts unten Element######################################################################
+	#rechts unten Element (3,3)###############################
 	xor rax, rax
 	xor rdx, rdx
 
+	# Check if right pixel exists
 	mov rbx, r11
 	inc rbx
 	cmp rbx, r15
-	jge .LwriteBlur
+	jge .LwriteBlur # no more pixels for testing
 
 
 	dec r10 #wegen unten
 	mov rbx, r10
-	inc r10 #wegen unten Element rückgängig
+	inc r10 				# wegen unten Element rückgängig
 	imul rbx, r15
 	add rbx, r11
 
-	inc rbx #wegen rechts
+	inc rbx 				# wegen rechts
 
 	imul rbx, 3
 
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
-	add r12, 1
+	add r12, 1			# add for devision to make the average
 
+#*******************calculating avg and writing data***************************
 .LwriteBlur:
 
 	#r10 und r11 müssen nicht auf Mitte gesetzt werden weil unverändert
 
 	xor rax, rax
 	xor rdx, rdx
-	xor rbx, rbx
 
 	#nochmal mittleres Element fürs zurückschreiben bestimmen!!!
 	mov rbx, r10 		# which level we are on[rdi + rbx]
@@ -450,14 +451,13 @@ blur:
 
 	mov rax, r14
 
-	idiv r12 				#alles durch 16 teilen
-	xor r12, r12
+	idiv r12 				# alles durch gewichtungsfaktoren der eingegangenen Pixel teilen
 
-	#auf neuem pointer speichern...
-	#auf alle drei Farbkanäle schreiben und nicht nur auf einen!!
-	mov [rsi + rbx], al			#Blue
-	mov [rsi + rbx + 1], al	#Green
-	mov [rsi + rbx + 2], al	#Red
+
+	# writing data back
+	mov [rsi + rbx], al			# Blue
+	mov [rsi + rbx + 1], al	# Green
+	mov [rsi + rbx + 2], al	# Red
 
 
 .Lrücksprung: #nötig falls Position nicht Mitte ist
