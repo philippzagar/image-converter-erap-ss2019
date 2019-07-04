@@ -36,6 +36,11 @@ typedef struct
 
 typedef struct
 {
+    unsigned char color;
+} RGBcolor;
+
+typedef struct
+{
     BMPHeader header;
     BMPImageInfo info;
     RGB colors[256];

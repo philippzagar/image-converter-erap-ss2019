@@ -31,6 +31,8 @@ RGB* readPixels(FILE* inFile, BMPImageInfo* info);
 bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues);
 RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info);
 RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info);
+bool endsWith(char *str, char *suffix);
+RGBcolor* convertRGBtoSIMD(RGB* rgbValues, BMPImageInfo* info);
 
 // Main Routine
 int main(int argc, char** argv) {
@@ -48,6 +50,13 @@ int main(int argc, char** argv) {
 */
     // Open the file with given file name
     //inFile = fopen(relativePath, "rb");
+
+    /*
+    if(endsWith(relativePath, ".jpg") || endsWith(relativePath, ".JPG")) {
+        read_jpeg_file(relativePath);
+        return 0;
+    }
+     */
 
     inFile = fopen("./lena.bmp", "rb");
 
@@ -105,6 +114,10 @@ int main(int argc, char** argv) {
         printf("Error while reading RGB values from file\n");
         return -1;
     }
+
+    // Convert to SIMD data model in memory
+    RGBcolor* rgbSIMD = convertRGBtoSIMD(rgbValues, info);
+
 
     // Convert to greyscale********************************************************************************************************************
     greyscale(rgbValues, info->width, info->height);
@@ -441,6 +454,32 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
     return convolutionRGBValues;
 }
 
+// Converts the RGB values to a different data model in memory, because SIMD in assembly needs it
+RGBcolor* convertRGBtoSIMD(RGB* rgbValues, BMPImageInfo* info) {
+    int countPixels = info->width * info->height;
+
+    // Allocate memory space for each color of RGB array of pixels
+    RGBcolor *rgbNewValuesRed = (RGBcolor*) malloc(countPixels);
+    RGBcolor *rgbNewValuesGreen = (RGBcolor*) malloc(countPixels);
+    RGBcolor *rgbNewValuesBlue = (RGBcolor*) malloc(countPixels);
+
+    // Allocate new array for all RGB values
+    RGBcolor *rgbNewValues = (RGBcolor*) malloc(3 * countPixels);
+
+    for(int i = 0; i < countPixels; i++) {
+        rgbNewValuesRed[i].color = rgbValues[i].red;
+        rgbNewValuesGreen[i].color = rgbValues[i].green;
+        rgbNewValuesBlue[i].color = rgbValues[i].blue;
+    }
+
+    // Copy the single color arrays into one final array -> rrrrrrr/gggggggg/bbbbbbb
+    memcpy(rgbNewValues, rgbNewValuesRed, countPixels);
+    memcpy(rgbNewValues + countPixels, rgbNewValuesGreen, countPixels);
+    memcpy(rgbNewValues + (2 * countPixels), rgbNewValuesBlue, countPixels);
+
+    return rgbNewValues;
+}
+
 /**
  * read_jpeg_file Reads from a jpeg file on disk specified by filename and saves into the
  * raw_image buffer in an uncompressed format.
@@ -521,4 +560,17 @@ int main(int argc,char **argv)
     free(raw_image);
     return 0;
 }
+
+// Check if string ends with a certain suffix
+bool endsWith(char *str, char *suffix)
+{
+    if (!str || !suffix)
+        return false;
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix > lenstr)
+        return false;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
 */
