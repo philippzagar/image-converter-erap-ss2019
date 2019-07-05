@@ -2,6 +2,8 @@
 // Created by Philipp on 14.06.2019.
 //
 
+#include <stdint.h>
+
 typedef struct
 {
     char signature[2];
@@ -36,7 +38,7 @@ typedef struct
 
 typedef struct
 {
-    unsigned char color;
+    unsigned int16_t color;
 } RGBcolor;
 
 typedef struct

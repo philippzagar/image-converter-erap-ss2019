@@ -266,7 +266,7 @@ RGB* readPixels(FILE* inFile, BMPImageInfo* info) {
     }
 
     // Read values
-    for(int i = 0; i < info->height; i++) {
+    for(unsigned int i = 0; i < info->height; i++) {
         // Read the values from the file to the right position in the RGB array
         if( fread(rgbValues + (i * info->width), sizeof(RGB), info->width, inFile) != info->width ) {
             printf("Error - Reading RGB values!\n");
@@ -337,7 +337,7 @@ bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbVa
     }
 
     // Write RGB values row for row because of alignment
-    for(int i = 0; i < info->height; i++) {
+    for(unsigned int i = 0; i < info->height; i++) {
         if( fwrite(rgbValues + i * info->width, sizeof(RGB), info->width, outFile) != info->width ) {
             return false;
         }
@@ -370,8 +370,8 @@ RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
     float sum = a + b + c;
 
     // Loop to convert every pixel to greyscale
-    for(int i = 0; i < info->height; i++) {
-        for(int j = 0; j < info->width; j++) {
+    for(unsigned int i = 0; i < info->height; i++) {
+        for(unsigned int j = 0; j < info->width; j++) {
             // Round down the result because RGB can only have integer numbers
             int D = (a * rgbValues[i*info->width + j].red
                     + b * rgbValues[i*info->width + j].green
@@ -409,8 +409,8 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
     char sumBlueChar;
 
     // Loop every pixel of image
-    for(int currentHeigh = 0; currentHeigh < info->height; currentHeigh++) {
-        for(int currentWidth = 0; currentWidth < info->width; currentWidth++) {
+    for(unsigned int currentHeigh = 0; currentHeigh < info->height; currentHeigh++) {
+        for(unsigned int currentWidth = 0; currentWidth < info->width; currentWidth++) {
 
             int helpPointer = (currentHeigh*info->width + currentWidth);
 
@@ -456,17 +456,17 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
 
 // Converts the RGB values to a different data model in memory, because SIMD in assembly needs it
 RGBcolor* convertRGBtoSIMD(RGB* rgbValues, BMPImageInfo* info) {
-    int countPixels = info->width * info->height;
+    long countPixels = info->width * info->height;
 
-    // Allocate memory space for each color of RGB array of pixels
-    RGBcolor *rgbNewValuesRed = (RGBcolor*) malloc(countPixels);
-    RGBcolor *rgbNewValuesGreen = (RGBcolor*) malloc(countPixels);
-    RGBcolor *rgbNewValuesBlue = (RGBcolor*) malloc(countPixels);
+    // Allocate memory space for each color of RGB array of pixels - 2 byte for one color -> SIMD
+    RGBcolor *rgbNewValuesRed = (RGBcolor*) malloc(2 * countPixels);
+    RGBcolor *rgbNewValuesGreen = (RGBcolor*) malloc(2 * countPixels);
+    RGBcolor *rgbNewValuesBlue = (RGBcolor*) malloc(2 * countPixels);
 
     // Allocate new array for all RGB values
-    RGBcolor *rgbNewValues = (RGBcolor*) malloc(3 * countPixels);
+    RGBcolor *rgbNewValues = (RGBcolor*) malloc(2 * 3 * countPixels);
 
-    for(int i = 0; i < countPixels; i++) {
+    for(long i = 0; i < countPixels; i++) {
         rgbNewValuesRed[i].color = rgbValues[i].red;
         rgbNewValuesGreen[i].color = rgbValues[i].green;
         rgbNewValuesBlue[i].color = rgbValues[i].blue;
@@ -474,8 +474,8 @@ RGBcolor* convertRGBtoSIMD(RGB* rgbValues, BMPImageInfo* info) {
 
     // Copy the single color arrays into one final array -> rrrrrrr/gggggggg/bbbbbbb
     memcpy(rgbNewValues, rgbNewValuesRed, countPixels);
-    memcpy(rgbNewValues + countPixels, rgbNewValuesGreen, countPixels);
-    memcpy(rgbNewValues + (2 * countPixels), rgbNewValuesBlue, countPixels);
+    memcpy(rgbNewValues + (2 * countPixels), rgbNewValuesGreen, countPixels);
+    memcpy(rgbNewValues + (4 * countPixels), rgbNewValuesBlue, countPixels);
 
     return rgbNewValues;
 }
