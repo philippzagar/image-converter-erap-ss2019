@@ -1,10 +1,10 @@
-CFLAGS=-g -Wall -Wextra
+CFLAGS=-O3 -g -Wall -Wextra -no-pie 
 
 .PHONY: all
-all: BMP
-BMP: Program.c BMP.s
+all: main
+main: main.c BMP.s
     
 
 .PHONY: clean
 clean:
-	rm -f BMP
+	rm -f main
