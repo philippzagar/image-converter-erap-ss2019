@@ -4,10 +4,10 @@
 
 .data
 
-redWeight: .word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
-greenWeight: .word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
-blueWeight: .word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
-#greyWeighting:      .byte 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01
+redWeight: 		.word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
+greenWeight: 		.word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
+blueWeight: 		.word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
+sumWeight:   		.word 0x0003,0x0003,0x0003,0x0003,0x0003,0x0003,0x0003,0x0003
 
 
 .text
@@ -27,7 +27,7 @@ blueWeight: .word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
 greyscale:
 
 	#r10 = counter for loop
-	#rsi = amountOfChannels
+	#rsi = amountOfpixels
 	#r8 = calculating average
 	#height moved to rcx for devision
 
@@ -37,7 +37,6 @@ greyscale:
 	mov rcx, rdx 		#moved height for devision
 
 	imul rsi, rcx 		#pixelAmount = height * width
-	imul rsi, 3 		#ChannelAmount = pixelAmount * 3
 
 
 
@@ -54,15 +53,19 @@ greyscale:
 
 
 	xor rax, rax		#For copying from Memory
-	xor r8, r8		#For storing average
+	xor r8, r8			#For storing average
 
 	mov al, [rdi + r10] 	#Blue channel
-	lea r8d, [eax * 1]	#Add to avg with weighting
+	lea r8d, [eax * 1]		#Add to avg with weighting
 
-	mov al, [rdi+ r10 + 1] 	#Green channel
+	add r10, rsi  				#Next Color channelblock
+
+	mov al, [rdi+ r10] 	#Green channel
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
 
-	mov al, [rdi+ r10 + 2]	#Red channel
+	add r10, rsi  				#Next Color channelblock
+
+	mov al, [rdi + r10]	#Red channel
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
 
 	mov eax, r8d
@@ -72,13 +75,20 @@ greyscale:
 
 	div r8
 
-	mov [rdi + r10], al  	#Blue channel
-	mov [rdi+ r10 + 1], al	#Green channel
+
 	mov [rdi+ r10 + 2], al	#Red channel
 
+	sub r10, rsi    				#Moving back a channelblock
+	mov [rdi + r10], al  	  #Blue channel
 
 
-	add r10, 3 #Move to the next pixel
+	sub r10, rsi    				#Moving back a channelblock
+	mov [rdi+ r10 + 1], al	#Green channel
+
+
+
+
+	inc r10 			 #Move to the next pixel
 	jmp .Lloop
 
 .Lend:
@@ -94,7 +104,7 @@ greyscale:
 #	# rdi = Adress pixel Array (Read and write)	#
 # 	# rsi = width					#
 #	# rdx = height					#
-#						#
+#							#
 #	--> Keine Rückgabe erwartet			#
 #-------------------------------------------------------#
 
@@ -103,69 +113,47 @@ greyscale:
 
 greyscale_simd:
 
-	#xmm0 = Color channel
+	#xmm0 = Color channel sum
+	#r10 = loop counter
+	#rsi = amount of pixels
 
- 	mov rcx, rdx 		#moved height for devision
+	movdqa xmm1, xmmword ptr[blueWeight]	#blue weighting
+	movdqa xmm2, xmmword ptr[blueWeight]	#green weighting
+	movdqa xmm3, xmmword ptr[blueWeight]	#red weighting
 
- 	mov r10, rcx
- 	imul r10, rsi
- 	sub r10, 6      	#The last bits that do not fit
- 	imul r10, 3			#Amount of channelsmultiply
- 	xor r11, r11        #Counter for loading data
- 	jmp .Lload #
- 	jmp .Lload
+	xor r10, r10
+	imul rsi, rcx 		#pixelAmount = height * width
+
+	jmp .Lload
 
 .Lconvert:
 
 
-	#movdqa xmm1, xmmword ptr[greyWeighting]
+	movdqu xmm0,  xmmword ptr[rdi + r10]
+
+	add r10, rsi
+	movdqu xmm4,  xmmword ptr[rdi + r10]
+
+	paddw xmm0, xmm4
 
 
+	add r10, rsi
+	movdqu xmm4,  xmmword ptr[rdi + r10]
+
+	paddw xmm0, xmm4
 
 
-
+	add r10, 8
 
 .Lload:
 
-	cmp r11, r10
-	jge .LlastPixels
-
-
-	movdqu xmm0, xmmword ptr[rdi + r11] #Could be potential problem with alignment
-
-
-
-
-
-
-
-	jmp .Lconvert
-	add r11, 45 #Amount of pixels * 3 that fit into a register
-	jmp .Lload
-
-	#todo:
-	#load only pixel row that fully fits into simd
-	#do the rest with non
 
 
 
 .LlastPixels: 	#Pixels that do not fit into a simd
 
-	mov rsi, 1
-	# mov rdx, how many pixels are left
-	#add rdi how many pixels where loaded and processed
 
-	jmp greyscale # Jump to grmultiplyey for pixels that do not fit
 
 
 
 ret
-
-
-
-#******************************************************************************
-#************************************BLUR**************************************
-#******************************************************************************
-
-
-
