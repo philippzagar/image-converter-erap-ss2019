@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <setjmp.h>
 
-#include "./libjpeg-master/jpeglib.h"
+//#include "./libjpeg-master/jpeglib.h"
 
 #include "BMPStructs.h"
 
@@ -27,7 +27,7 @@ bool endsWith(char *str, char *suffix);
 RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues, BMPImageInfo* info);
 RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues, BMPImageInfo* info);
 
-GLOBAL(int) read_JPEG_file (char * filename);
+//GLOBAL(int) read_JPEG_file (char * filename);
 
 // Main Routine
 int main(int argc, char** argv) {
