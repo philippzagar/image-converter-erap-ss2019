@@ -43,7 +43,8 @@ typedef struct
 
 typedef struct
 {
-    int16_t color;
+    unsigned char reserved;
+    unsigned char color;
 } RGBcolorWord;
 
 typedef struct
