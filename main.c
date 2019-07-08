@@ -514,3 +514,5 @@ bool endsWith(char *str, char *suffix)
         return false;
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
+
+// -ljpeg
