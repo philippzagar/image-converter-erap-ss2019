@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
 
     if(endsWith("./test.jpg", ".jpg") || endsWith("./test.jpg", ".JPG")) {
-        read_JPEG_file("./test.jpg");
+        //read_JPEG_file("./test.jpg");
         return 0;
     }
 
