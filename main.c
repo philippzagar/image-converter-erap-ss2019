@@ -12,7 +12,6 @@
 extern void greyscale(RGB *rgbValuesOut, int width, int height);
 extern void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
 
-
 extern void blur(RGB* in, RGB* out, int width, int height);
 
 // C Functions
@@ -137,7 +136,7 @@ int main(int argc, char** argv) {
 
 
     // Convert to greyscale********************************************************************************************************************
-    greyscale(rgbValues, info->width, info->height);
+    //greyscale(rgbValues, info->width, info->height);
 
 
 
@@ -153,6 +152,12 @@ int main(int argc, char** argv) {
     // Set the new values to the old pointer
     rgbValues = out;
 
+    //RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
+    //blur(rgbValues, out, info->width, info->height);
+
+    //free(rgbValues);
+
+    //rgbValues = out;
 
     //rgbValues = convolutionRGB(rgbValues, info);
 

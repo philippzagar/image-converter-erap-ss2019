@@ -118,8 +118,8 @@ greyscale_simd:
 	#rsi = amount of pixels
 
 	movdqa xmm1, xmmword ptr[blueWeight]	#blue weighting
-	movdqa xmm2, xmmword ptr[blueWeight]	#green weighting
-	movdqa xmm3, xmmword ptr[blueWeight]	#red weighting
+	movdqa xmm2, xmmword ptr[greenWeight]	#green weighting
+	movdqa xmm3, xmmword ptr[redWeight]	#red weighting
 
 	xor r10, r10
 	imul rsi, rcx 		#pixelAmount = height * width
