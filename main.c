@@ -47,10 +47,10 @@ int main(int argc, char** argv) {
     //inFile = fopen(relativePath, "rb");
 
 
-    if(endsWith("./test.jpg", ".jpg") || endsWith("./test.jpg", ".JPG")) {
-        //read_JPEG_file("./test.jpg");
-        return 0;
-    }
+    // if(endsWith("./test.jpg", ".jpg") || endsWith("./test.jpg", ".JPG")) {
+    //     //read_JPEG_file("./test.jpg");
+    //     return 0;
+    // }
 
 
     inFile = fopen("./lena.bmp", "rb");
@@ -115,18 +115,18 @@ int main(int argc, char** argv) {
 
 
     // Convert to greyscale********************************************************************************************************************
-    greyscale(rgbValues, info->width, info->height);
+    //greyscale(rgbValues, info->width, info->height);
 
 
 
 
     // For Blur *******************************************************************************************************************************
-    RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
-    blur(rgbValues, out, info->width, info->height);
+    //RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
+    //blur(rgbValues, out, info->width, info->height);
 
-    free(rgbValues);
+    //free(rgbValues);
 
-    rgbValues = out;
+    //rgbValues = out;
 
 
     //rgbValues = convolutionRGB(rgbValues, info);
