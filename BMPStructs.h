@@ -38,8 +38,13 @@ typedef struct
 
 typedef struct
 {
-    unsigned int16_t color;
-} RGBcolor;
+    unsigned char color;
+} RGBcolorByte;
+
+typedef struct
+{
+    int16_t color;
+} RGBcolorWord;
 
 typedef struct
 {
