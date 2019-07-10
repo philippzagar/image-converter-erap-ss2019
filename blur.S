@@ -324,6 +324,9 @@ ret
 
 
 
+
+
+
 #******************************************************************************************
 #*******************blur zur Benutzung für farbige Bilder**********************************
 
@@ -356,13 +359,13 @@ blur_colour:
 
 	cmp r13, 3
 	jge .Lendd_rgb			#geht durch rgb durch (0,1,2)
-	xor r10, r10            #nötig?
+	xor r10, r10
 	
 
 .LloopHeight_colour:
 
 	cmp r10, rcx
-	jge .Lendd_colour				#if(r10 >= height)
+	jge .Lendd_colour		#if(r10 >= height)
 	xor r11, r11 			#Width counter = 0
 
 
