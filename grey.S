@@ -106,12 +106,12 @@ greyscale:
 # void greyscale_simd(RGB* out, int width, int height);
 
 #-------------------Bei der Übergabe--------------------#
-#							#
-#	# rdi = Adress pixel Array (Read and write)	#
-# 	# rsi = width					#
-#	# rdx = height					#
-#							#
-#	--> Keine Rückgabe erwartet			#
+#														#
+#	# rdi = Adress pixel Array (Read and write)			#
+# 	# rsi = width										#
+#	# rdx = height										#
+#														#
+#	--> Keine Rückgabe erwartet							#
 #-------------------------------------------------------#
 
 
@@ -124,14 +124,14 @@ greyscale_simd:
 	#rsi = amount of pixels
 
 	movdqu xmm3, xmmword ptr[redWeight]	#blue weighting
-	movdqu xmm4, xmmword ptr[greenWeight]	#green weighting
+	movdqu xmm4, xmmword ptr[greenWeight] #green weighting
 	movdqu xmm5, xmmword ptr[redWeight]	#red weighting
-	movdqu xmm6, xmmword ptr[sumWeight]	#red weighting
+	movdqu xmm6, xmmword ptr[sumWeight]	#sum weighting
 
 	xor r10, r10
-	imul rsi, rdx 		#pixelAmount = height * width
+	imul rsi, rdx 				#pixelAmount = height * width
 
-	imul rsi, 2       #because pixels are a word
+	imul rsi, 2       			#because pixels are a word
 
 	jmp .Lload
 
@@ -149,8 +149,7 @@ greyscale_simd:
 
 	#Green channelblock
 	add r10, rsi
-
-  movdqu xmm1,  xmmword ptr[rdi + r10]
+	movdqu xmm1,  xmmword ptr[rdi + r10]
 
 	#pmullw xmm1, xmm4
 
@@ -158,8 +157,6 @@ greyscale_simd:
 
 
 	#Red channelblock
-
-
 	add r10, rsi
 	movdqu xmm1,  xmmword ptr[rdi + r10]
 
