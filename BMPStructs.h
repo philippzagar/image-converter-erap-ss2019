@@ -43,8 +43,8 @@ typedef struct
 
 typedef struct
 {
-    unsigned char reserved;
     unsigned char color;
+    unsigned char reserved;
 } RGBcolorWord;
 
 typedef struct
