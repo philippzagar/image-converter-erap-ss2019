@@ -9,12 +9,14 @@
 #include "BMPStructs.h"
 
 // Assembly Functions
-extern void greyscale(RGB *rgbValuesOut, int width, int height);
-extern void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
 
-extern void blur(RGB* in, RGB* out, int width, int height);
+  //greyscale
+  extern void greyscale(RGB *rgbValuesOut, int width, int height);
+  extern void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
 
-extern void blur_colour(RGB* in, RGB* out, int width, int height);
+  // Blur:
+  extern void blur(RGB* in, RGB* out, int width, int height);
+  extern void blur_colour(RGB* in, RGB* out, int width, int height);
 
 // C Functions
 BMPHeader* readHeader(FILE* inFile);
@@ -162,15 +164,26 @@ int main(int argc, char** argv) {
 
 
 
-    // For Flo****************************************************************************************************************************************
-    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
-    blur_colour (rgbSIMD, rgbSIMD, info->width, info->height);
+    // For Flo***with rrrgggbbb*************************************************************************************************************************************
+    // RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+    // blur_colour (rgbSIMD, rgbSIMD, info->width, info->height);
+    //
+    // RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
+    // free(rgbValues);
+    //
+    // rgbValues = rgb;
 
-    RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
+
+    RGB* out = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
+
+
+    blur_colour (rgbValues, out, info->width, info->height);
+
+
+
     free(rgbValues);
 
-    rgbValues = rgb;
-
+    rgbValues = out;
 
 
 
