@@ -1,5 +1,6 @@
 .intel_syntax noprefix
 .global blur
+.global blur_colour
 
 
 .data
@@ -346,11 +347,11 @@ blur_colour:
 
 
 	xor r10, r10 			#Height counter = 0
-	
+
 	push r13
 	xor r13, r13			# for rgb loop --> 0,1,2
-	
-	
+
+
 .Lloop_rgb:
 
 	cmp r10, 3
@@ -623,8 +624,8 @@ blur_colour:
 
 	# writing data back
 	add rbx, r13		# Blue, Green, Red (depending on r13)
-	
-	mov [rsi + rbx], al		
+
+	mov [rsi + rbx], al
 
 	# LloopWidth erhöhen
 	inc r11
@@ -639,7 +640,7 @@ blur_colour:
 .Lendd_colour:
 	inc r13
 	jmp .Lloop_rgb
-	
+
 .Lendd_rgb:
 
 	pop r13
@@ -648,5 +649,3 @@ blur_colour:
 	pop rbx
 	pop r15
 ret
-
-

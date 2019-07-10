@@ -14,6 +14,8 @@ extern void greyscale_simd(RGB* out, int width, int height); // Runs with greysc
 
 extern void blur(RGB* in, RGB* out, int width, int height);
 
+extern void blur_colour(RGB* in, RGB* out, int width, int height);
+
 // C Functions
 BMPHeader* readHeader(FILE* inFile);
 BMPImageInfo* readInfo(FILE* inFile);
@@ -136,15 +138,15 @@ int main(int argc, char** argv) {
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
-    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
-
-    greyscale(rgbSIMD, info->width, info->height);
-
-    RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
-
-    free(rgbValues);
-
-    rgbValues = rgb;
+    // RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+    //
+    // greyscale(rgbSIMD, info->width, info->height);
+    //
+    // RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
+    //
+    // free(rgbValues);
+    //
+    // rgbValues = rgb;
 
 
     // Convert to greyscale********************************************************************************************************************
@@ -153,10 +155,25 @@ int main(int argc, char** argv) {
 
     // For Blur *******************************************************************************************************************************
     // Allocate new memory space for blur, because else the algorithm doesnt work proprly
-    RGB* out = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
-    blur(rgbValues, out, global_image_width, global_image_height);
+    //RGB* out = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
+    //blur(rgbValues, out, global_image_width, global_image_height);
 
     // Free old rgbValues
+
+
+
+    // For Flo****************************************************************************************************************************************
+    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+    blur_colour (rgbSIMD, rgbSIMD, info->width, info->height);
+
+    RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
+    free(rgbValues);
+
+    rgbValues = rgb;
+
+
+
+
 
 
     // Set the new values to the old pointer
