@@ -544,41 +544,29 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
 RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues, BMPImageInfo* info) {
     long countPixels = info->width * info->height;
 
-    // Allocate memory space for each color of RGB array of pixels - 2 byte for one color -> SIMD
-    RGBcolorWord *rgbNewValuesRed = (RGBcolorWord*) malloc(countPixels * 2 * sizeof(unsigned char));
-    RGBcolorWord *rgbNewValuesGreen = (RGBcolorWord*) malloc(countPixels * 2 * sizeof(unsigned char));
-    RGBcolorWord *rgbNewValuesBlue = (RGBcolorWord*) malloc(countPixels * 2 * sizeof(unsigned char));
-
     // Allocate new array for all RGB values
-    RGBcolorWord *rgbNewValues = (RGBcolorWord*) malloc(3 * countPixels * 2 * sizeof(unsigned char));
+    RGBcolorWord* rgbNewValues = (RGBcolorWord*) malloc(3 * (countPixels * 2 * sizeof(unsigned char)));
 
     for(long i = 0; i < countPixels; i++) {
-        rgbNewValuesRed[i].color = rgbValues[i].red;
-        rgbNewValuesGreen[i].color = rgbValues[i].green;
-        rgbNewValuesBlue[i].color = rgbValues[i].blue;
+        rgbNewValues[i].color = rgbValues[i].red;
+        rgbNewValues[i + countPixels].color = rgbValues[i].green;
+        rgbNewValues[i + 2*countPixels].color = rgbValues[i].blue;
     }
-
-    // Copy the single color arrays into one final array -> rrrrrrr/gggggggg/bbbbbbb
-    memcpy(rgbNewValues, rgbNewValuesRed, countPixels * 2 * sizeof(unsigned char));
-    memcpy(rgbNewValues + (2 * sizeof(unsigned char) * countPixels), rgbNewValuesGreen, countPixels * 2 * sizeof(unsigned char));
-    memcpy(rgbNewValues + 2 * (2 * sizeof(unsigned char) * countPixels), rgbNewValuesBlue, countPixels * 2 * sizeof(unsigned char));
 
     return rgbNewValues;
 }
 
 // Converts the SIMD Word RGB values to normal RGB values
 RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues, BMPImageInfo* info) {
+    long countPixels = info->width * info->height;
+
     // Allocate new array for all RGB values
-    RGB* rgbNewValues = (RGB*) malloc(info->width * info->height * sizeof(RGB));
+    RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
 
-    RGBcolorWord* redPointer = rgbValues;
-    RGBcolorWord* greenPointer = rgbValues + (info->width * info->height * 2 * sizeof(unsigned char));
-    RGBcolorWord* bluePointer = rgbValues + 2 * (info->width * info->height * 2 * sizeof(unsigned char));
-
-    for(long i = 0; i < info->width * info->height; i++) {
-        rgbNewValues[i].red = redPointer[i].color;
-        rgbNewValues[i].green = greenPointer[i].color;
-        rgbNewValues[i].blue = bluePointer[i].color;
+    for(long i = 0; i < countPixels; i++) {
+        rgbNewValues[i].red = rgbValues[i].color;
+        rgbNewValues[i].green = rgbValues[i + countPixels].color;
+        rgbNewValues[i].blue = rgbValues[i + 2*countPixels].color;
     }
 
     return rgbNewValues;
@@ -588,41 +576,29 @@ RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues, BMPImageInfo* info) {
 RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues, BMPImageInfo* info) {
     long countPixels = info->width * info->height;
 
-    // Allocate memory space for each color of RGB array of pixels - 2 byte for one color -> SIMD
-    RGBcolorByte *rgbNewValuesRed = (RGBcolorByte*) malloc(countPixels * sizeof(unsigned char));
-    RGBcolorByte *rgbNewValuesGreen = (RGBcolorByte*) malloc(countPixels * sizeof(unsigned char));
-    RGBcolorByte *rgbNewValuesBlue = (RGBcolorByte*) malloc(countPixels * sizeof(unsigned char));
-
     // Allocate new array for all RGB values
-    RGBcolorByte *rgbNewValues = (RGBcolorByte*) malloc(3 * countPixels * sizeof(unsigned char));
+    RGBcolorByte* rgbNewValues = (RGBcolorByte*) malloc(3 * (countPixels * 2 * sizeof(unsigned char)));
 
     for(long i = 0; i < countPixels; i++) {
-        rgbNewValuesRed[i].color = rgbValues[i].red;
-        rgbNewValuesGreen[i].color = rgbValues[i].green;
-        rgbNewValuesBlue[i].color = rgbValues[i].blue;
+        rgbNewValues[i].color = rgbValues[i].red;
+        rgbNewValues[i + countPixels].color = rgbValues[i].green;
+        rgbNewValues[i + 2*countPixels].color = rgbValues[i].blue;
     }
-
-    // Copy the single color arrays into one final array -> rrrrrrr/gggggggg/bbbbbbb
-    memcpy(rgbNewValues, rgbNewValuesRed, countPixels * sizeof(unsigned char));
-    memcpy(rgbNewValues + (sizeof(unsigned char) * countPixels), rgbNewValuesGreen, countPixels * sizeof(unsigned char));
-    memcpy(rgbNewValues + 2 * (sizeof(unsigned char) * countPixels), rgbNewValuesBlue, countPixels * sizeof(unsigned char));
 
     return rgbNewValues;
 }
 
 // Converts the SIMD Byte values to normal RGB values
 RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues, BMPImageInfo* info) {
+    long countPixels = info->width * info->height;
+
     // Allocate new array for all RGB values
-    RGB* rgbNewValues = (RGB*) malloc(info->width * info->height * sizeof(RGB));
+    RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
 
-    RGBcolorByte* redPointer = rgbValues;
-    RGBcolorByte* greenPointer = rgbValues + (info->width * info->height * sizeof(unsigned char));
-    RGBcolorByte* bluePointer = rgbValues + 2 * (info->width * info->height * sizeof(unsigned char));
-
-    for(long i = 0; i < info->width * info->height; i++) {
-        rgbNewValues[i].red = redPointer[i].color;
-        rgbNewValues[i].green = greenPointer[i].color;
-        rgbNewValues[i].blue = bluePointer[i].color;
+    for(long i = 0; i < countPixels; i++) {
+        rgbNewValues[i].red = rgbValues[i].color;
+        rgbNewValues[i].green = rgbValues[i + countPixels].color;
+        rgbNewValues[i].blue = rgbValues[i + 2*countPixels].color;
     }
 
     return rgbNewValues;
