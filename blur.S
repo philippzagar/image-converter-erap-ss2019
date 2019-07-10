@@ -354,7 +354,7 @@ blur_colour:
 
 .Lloop_rgb:
 
-	cmp r10, 3
+	cmp r13, 3
 	jge .Lendd_rgb			#geht durch rgb durch (0,1,2)
 	xor r10, r10            #nötig?
 	
