@@ -136,8 +136,8 @@ int main(int argc, char** argv) {
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
-    RGBcolorByte* rgbSIMD = convertRGBtoSIMDByte(rgbValues, info);
-    RGB* rgb = convertSIMDBytetoRGB(rgbSIMD, info);
+    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues, info);
+    RGB* rgb = convertSIMDWordtoRGB(rgbSIMD, info);
 
     // Convert to greyscale********************************************************************************************************************
     //greyscale(rgbValues, info->width, info->height);
