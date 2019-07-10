@@ -140,15 +140,17 @@ int main(int argc, char** argv) {
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
-    // RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
-    //
-    // greyscale(rgbSIMD, info->width, info->height);
-    //
-    // RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
-    //
-    // free(rgbValues);
-    //
-    // rgbValues = rgb;
+
+    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+
+    greyscale_simd(rgbSIMD, info->width, info->height);
+
+    RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
+
+    free(rgbValues);
+
+    rgbValues = rgb;
+
 
 
     // Convert to greyscale********************************************************************************************************************
@@ -174,16 +176,16 @@ int main(int argc, char** argv) {
     // rgbValues = rgb;
 
 
-    RGB* out = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
-
-
-    blur_colour (rgbValues, out, info->width, info->height);
-
-
-
-    free(rgbValues);
-
-    rgbValues = out;
+    // RGB* out = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
+    //
+    //
+    // blur_colour (rgbValues, out, info->width, info->height);
+    //
+    //
+    //
+    // free(rgbValues);
+    //
+    // rgbValues = out;
 
 
 
