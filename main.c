@@ -136,8 +136,16 @@ int main(int argc, char** argv) {
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
-    RGBcolorByte* rgbSIMD = convertRGBtoSIMDByte(rgbValues);
-    RGB* rgb = convertSIMDBytetoRGB(rgbSIMD);
+    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+
+    greyscale(rgbSIMD, info->width, info->height);
+
+    RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
+
+    free(rgbValues);
+
+    rgbValues = rgb;
+
 
     // Convert to greyscale********************************************************************************************************************
     //greyscale(rgbValues, info->width, info->height);
@@ -149,10 +157,10 @@ int main(int argc, char** argv) {
     blur(rgbValues, out, global_image_width, global_image_height);
 
     // Free old rgbValues
-    free(rgbValues);
+
 
     // Set the new values to the old pointer
-    rgbValues = out;
+
 
     //RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
     //blur(rgbValues, out, info->width, info->height);

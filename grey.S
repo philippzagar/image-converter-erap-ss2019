@@ -37,11 +37,12 @@ greyscale:
 	mov rcx, rdx 		#moved height for devision
 
 	imul rsi, rcx 		#pixelAmount = height * width
+	imul rsi, 2				#each pixel is a word
 
 
 
 
-	xor r10, r10 		#loop Counter = 0Retry
+	xor r10, r10 		#loop Counter = 0
 
 
 .Lloop:
@@ -60,12 +61,12 @@ greyscale:
 
 	add r10, rsi  				#Next Color channelblock
 
-	mov al, [rdi+ r10] 	#Green channel
+	mov al, [rdi+ r10 ] 	#Green channel
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
 
 	add r10, rsi  				#Next Color channelblock
 
-	mov al, [rdi + r10]	#Red channel
+	mov al, [rdi + r10 ]	#Red channel
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
 
 	mov eax, r8d
@@ -76,19 +77,19 @@ greyscale:
 	div r8
 
 
-	mov [rdi+ r10 + 2], al	#Red channel
+	mov [rdi+ r10], al	#Red channel
 
 	sub r10, rsi    				#Moving back a channelblock
 	mov [rdi + r10], al  	  #Blue channel
 
 
 	sub r10, rsi    				#Moving back a channelblock
-	mov [rdi+ r10 + 1], al	#Green channel
+	mov [rdi + r10], al	#Green channel
 
 
 
 
-	inc r10 			 #Move to the next pixel
+	add r10, 2 			 #Move to the next pixel
 	jmp .Lloop
 
 .Lend:
