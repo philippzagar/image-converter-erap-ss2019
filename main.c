@@ -136,8 +136,8 @@ int main(int argc, char** argv) {
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
-    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues, info);
-    RGB* rgb = convertSIMDWordtoRGB(rgbSIMD, info);
+    RGBcolorByte* rgbSIMD = convertRGBtoSIMDByte(rgbValues, info);
+    RGB* rgb = convertSIMDBytetoRGB(rgbSIMD, info);
 
     // Convert to greyscale********************************************************************************************************************
     //greyscale(rgbValues, info->width, info->height);
@@ -577,7 +577,7 @@ RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues, BMPImageInfo* info) {
     long countPixels = info->width * info->height;
 
     // Allocate new array for all RGB values
-    RGBcolorByte* rgbNewValues = (RGBcolorByte*) malloc(3 * (countPixels * 2 * sizeof(unsigned char)));
+    RGBcolorByte* rgbNewValues = (RGBcolorByte*) malloc(3 * (countPixels * sizeof(unsigned char)));
 
     for(long i = 0; i < countPixels; i++) {
         rgbNewValues[i].color = rgbValues[i].red;
