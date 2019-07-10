@@ -356,7 +356,8 @@ blur_colour:
 
 	cmp r10, 3
 	jge .Lendd_rgb			#geht durch rgb durch (0,1,2)
-
+	xor r10, r10            #nötig?
+	
 
 .LloopHeight_colour:
 
@@ -388,6 +389,7 @@ blur_colour:
 
 	imul rbx, 3 			# 3 Byte per pixel
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 4
 	add r14, rax
@@ -412,6 +414,7 @@ blur_colour:
 
 	imul rbx, 3
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
@@ -438,6 +441,7 @@ blur_colour:
 
 	imul rbx, 3
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
@@ -462,6 +466,7 @@ blur_colour:
 
 	imul rbx, 3
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
@@ -490,6 +495,7 @@ blur_colour:
 
 	imul rbx, 3
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
@@ -519,6 +525,7 @@ blur_colour:
 
 	imul rbx, 3
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
@@ -544,6 +551,7 @@ blur_colour:
 
 	imul rbx, 3
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 2
 	add r14, rax
@@ -570,6 +578,7 @@ blur_colour:
 
 	imul rbx, 3
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
@@ -598,6 +607,7 @@ blur_colour:
 
 	imul rbx, 3
 
+	add rbx, r13
 	mov al, [rdi + rbx]
 	imul rax, 1
 	add r14, rax
@@ -624,7 +634,6 @@ blur_colour:
 
 	# writing data back
 	add rbx, r13		# Blue, Green, Red (depending on r13)
-
 	mov [rsi + rbx], al
 
 	# LloopWidth erhöhen
