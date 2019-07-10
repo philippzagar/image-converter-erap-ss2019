@@ -24,7 +24,9 @@ RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info);
 RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info);
 bool endsWith(char *str, char *suffix);
 RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues, BMPImageInfo* info);
+RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues, BMPImageInfo* info);
 RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues, BMPImageInfo* info);
+RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues, BMPImageInfo* info);
 
 RGB* read_JPEG_file (FILE* infile);
 void save_scanline(unsigned char* buffer, RGB* rgbValues, int actualHeight);
@@ -134,13 +136,11 @@ int main(int argc, char** argv) {
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
-    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues, info);
-
+    RGBcolorByte* rgbSIMD = convertRGBtoSIMDByte(rgbValues, info);
+    RGB* rgb = convertSIMDBytetoRGB(rgbSIMD, info);
 
     // Convert to greyscale********************************************************************************************************************
     //greyscale(rgbValues, info->width, info->height);
-
-
 
 
     // For Blur *******************************************************************************************************************************
