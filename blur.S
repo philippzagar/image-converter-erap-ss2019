@@ -622,7 +622,9 @@ blur_colour:
 
 
 	# writing data back
-	mov [rsi + rbx + r13], al		# Blue, Green, Red (depending on r13)
+	add rbx, r13		# Blue, Green, Red (depending on r13)
+	
+	mov [rsi + rbx], al		
 
 	# LloopWidth erhöhen
 	inc r11
@@ -638,7 +640,7 @@ blur_colour:
 	inc r13
 	jmp .Lloop_rgb
 	
-.Lendd_rgb
+.Lendd_rgb:
 
 	pop r13
 	pop r14
