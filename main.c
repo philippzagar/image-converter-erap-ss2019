@@ -20,13 +20,13 @@ BMPImageInfo* readInfo(FILE* inFile);
 bool checkBMPImage(BMPHeader* header, BMPImageInfo* info);
 RGB* readPixels(FILE* inFile, BMPImageInfo* info);
 bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues);
-RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info);
-RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info);
+RGB* convertRGBtoGreyscale(RGB* rgbValues);
+RGB* convolutionRGB(RGB* rgbValues);
 bool endsWith(char *str, char *suffix);
-RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues, BMPImageInfo* info);
-RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues, BMPImageInfo* info);
-RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues, BMPImageInfo* info);
-RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues, BMPImageInfo* info);
+RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues);
+RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues);
+RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues);
+RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues);
 
 RGB* read_JPEG_file (FILE* infile);
 void save_scanline(unsigned char* buffer, RGB* rgbValues, int actualHeight);
@@ -34,8 +34,8 @@ void save_scanline(unsigned char* buffer, RGB* rgbValues, int actualHeight);
 bool write_JPEG_file (FILE* outfile, int quality, RGB* rgbValues);
 
 // Global variables
-int global_image_height;
-int global_image_width;
+unsigned int global_image_height;
+unsigned int global_image_width;
 //J_COLOR_SPACE global_colorSpace;
 
 // Main Routine
@@ -136,8 +136,8 @@ int main(int argc, char** argv) {
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
-    RGBcolorByte* rgbSIMD = convertRGBtoSIMDByte(rgbValues, info);
-    RGB* rgb = convertSIMDBytetoRGB(rgbSIMD, info);
+    RGBcolorByte* rgbSIMD = convertRGBtoSIMDByte(rgbValues);
+    RGB* rgb = convertSIMDBytetoRGB(rgbSIMD);
 
     // Convert to greyscale********************************************************************************************************************
     //greyscale(rgbValues, info->width, info->height);
@@ -145,8 +145,8 @@ int main(int argc, char** argv) {
 
     // For Blur *******************************************************************************************************************************
     // Allocate new memory space for blur, because else the algorithm doesnt work proprly
-    RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
-    blur(rgbValues, out, info->width, info->height);
+    RGB* out = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
+    blur(rgbValues, out, global_image_width, global_image_height);
 
     // Free old rgbValues
     free(rgbValues);
@@ -211,6 +211,11 @@ int main(int argc, char** argv) {
         info->verticalResolution = 72;
 
         writeImage(fopen("./test2.bmp", "wb"), header, info, rgbVal);
+
+        if(outFile != NULL) {
+            fclose(outFile);
+        }
+
         */// BMP File
     } else {
         // Open file to write back the picture to memory
@@ -225,22 +230,28 @@ int main(int argc, char** argv) {
             printf("Error while writing image to memory\n");
             return -1;
         }
+
+        // Clear allocated space
+        if(header != NULL) {
+            free(header);
+        }
+
+        if(info != NULL) {
+            free(info);
+        }
+
+        if(outFile != NULL) {
+            fclose(outFile);
+        }
     }
 
     // Close open files
-    fclose(inFile);
-    fclose(outFile);
+    if(inFile != NULL) {
+        fclose(inFile);
+    }
 
     // Clear allocated space
-    if(header) {
-        free(header);
-    }
-
-    if(info) {
-        free(info);
-    }
-
-    if(rgbValues) {
+    if(rgbValues != NULL) {
         free(rgbValues);
     }
 
@@ -323,6 +334,9 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
         printf("Error - Bits per pixel is not 24!\n");
         return false;
     }
+
+    global_image_width = info->width;
+    global_image_height = info->height;
 
     return true;
 }
@@ -448,7 +462,7 @@ bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbVa
 }
 
 // Convert RGB values to greyscale
-RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
+RGB* convertRGBtoGreyscale(RGB* rgbValues) {
     // Constants
     float a = 0.3;
     float b = 0.3;
@@ -456,18 +470,18 @@ RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
     float sum = a + b + c;
 
     // Loop to convert every pixel to greyscale
-    for(unsigned int i = 0; i < info->height; i++) {
-        for(unsigned int j = 0; j < info->width; j++) {
+    for(unsigned int i = 0; i < global_image_height; i++) {
+        for(unsigned int j = 0; j < global_image_width; j++) {
             // Round down the result because RGB can only have integer numbers
-            int D = (a * rgbValues[i*info->width + j].red
-                    + b * rgbValues[i*info->width + j].green
-                    + c * rgbValues[i*info->width + j].blue)
+            int D = (a * rgbValues[i*global_image_width + j].red
+                    + b * rgbValues[i*global_image_width + j].green
+                    + c * rgbValues[i*global_image_width + j].blue)
                     / sum;
 
             // Set grey color to RGB pixel
-            rgbValues[i*info->width + j].red = D;
-            rgbValues[i*info->width + j].green = D;
-            rgbValues[i*info->width + j].blue = D;
+            rgbValues[i*global_image_width + j].red = D;
+            rgbValues[i*global_image_width + j].green = D;
+            rgbValues[i*global_image_width + j].blue = D;
         }
     }
 
@@ -475,7 +489,7 @@ RGB* convertRGBtoGreyscale(RGB* rgbValues, BMPImageInfo* info) {
 }
 
 // Convert RGB values to greyscale
-RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
+RGB* convolutionRGB(RGB* rgbValues) {
     // Constants
     char kernel[3][3] = {
             {1, 2, 1},
@@ -484,7 +498,7 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
     };
 
     // Allocate new RGB array -> Values of old array are not overwritten (because of needing those pixels for convolution)
-    RGB* convolutionRGBValues = (RGB*) malloc(info->width * info->height * sizeof(RGB));
+    RGB* convolutionRGBValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
 
     // Variables
     int sumRed = 0;
@@ -495,19 +509,19 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
     char sumBlueChar;
 
     // Loop every pixel of image
-    for(unsigned int currentHeigh = 0; currentHeigh < info->height; currentHeigh++) {
-        for(unsigned int currentWidth = 0; currentWidth < info->width; currentWidth++) {
+    for(unsigned int currentHeigh = 0; currentHeigh < global_image_height; currentHeigh++) {
+        for(unsigned int currentWidth = 0; currentWidth < global_image_width; currentWidth++) {
 
-            int helpPointer = (currentHeigh*info->width + currentWidth);
+            int helpPointer = (currentHeigh*global_image_width + currentWidth);
 
            // Loop through kernel
             for(int kerneli = -1; kerneli <= 1; kerneli++) {
                 for(int kernelj = -1; kernelj <= 1; kernelj++) {
                     // Check if the kernel is inside of the picture
                     if(currentHeigh + kerneli >= 0 && currentWidth + kernelj >= 0 && // Skip the pixel otherwise --> value of 0
-                       currentHeigh + kerneli < info->height && currentWidth + kernelj < info->width) {
+                       currentHeigh + kerneli < global_image_height && currentWidth + kernelj < global_image_width) {
 
-                        int pixelNavigator = helpPointer +  kerneli*info->width + kernelj;
+                        int pixelNavigator = helpPointer +  kerneli*global_image_width + kernelj;
 
                         // Sum up
                         sumRed += rgbValues[pixelNavigator].red * kernel[kerneli+1][kernelj+1];
@@ -541,8 +555,8 @@ RGB* convolutionRGB(RGB* rgbValues, BMPImageInfo* info) {
 }
 
 // Converts the RGB values to a different data model in memory, because SIMD in assembly needs it
-RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues, BMPImageInfo* info) {
-    long countPixels = info->width * info->height;
+RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues) {
+    long countPixels = global_image_width * global_image_height;
 
     // Allocate new array for all RGB values
     RGBcolorWord* rgbNewValues = (RGBcolorWord*) malloc(3 * (countPixels * 2 * sizeof(unsigned char)));
@@ -557,8 +571,8 @@ RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues, BMPImageInfo* info) {
 }
 
 // Converts the SIMD Word RGB values to normal RGB values
-RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues, BMPImageInfo* info) {
-    long countPixels = info->width * info->height;
+RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues) {
+    long countPixels = global_image_width * global_image_height;
 
     // Allocate new array for all RGB values
     RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
@@ -573,8 +587,8 @@ RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues, BMPImageInfo* info) {
 }
 
 // Converts the RGB values to a different data model in memory, because SIMD in assembly needs it
-RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues, BMPImageInfo* info) {
-    long countPixels = info->width * info->height;
+RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues) {
+    long countPixels = global_image_width * global_image_height;
 
     // Allocate new array for all RGB values
     RGBcolorByte* rgbNewValues = (RGBcolorByte*) malloc(3 * (countPixels * sizeof(unsigned char)));
@@ -589,8 +603,8 @@ RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues, BMPImageInfo* info) {
 }
 
 // Converts the SIMD Byte values to normal RGB values
-RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues, BMPImageInfo* info) {
-    long countPixels = info->width * info->height;
+RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues) {
+    long countPixels = global_image_width * global_image_height;
 
     // Allocate new array for all RGB values
     RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
