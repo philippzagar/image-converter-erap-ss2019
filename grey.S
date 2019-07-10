@@ -4,12 +4,15 @@
 
 .data
 
-redWeight: 		.word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
-greenWeight: 		.word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
-blueWeight: 		.word 0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001,0x0001
-sumWeight:   		.word 0x0003,0x0003,0x0003,0x0003,0x0003,0x0003,0x0003,0x0003
+redWeight: 			.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
+greenWeight: 		.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
+blueWeight: 		.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
+
+sumWeight:   		.word 0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 
+
+#0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 .text
 
 
@@ -96,6 +99,8 @@ greyscale:
 	ret
 
 #********************************************************
+#**********************greyscale_simd********************
+#********************************************************
 
 
 # void greyscale_simd(RGB* out, int width, int height);
@@ -118,43 +123,104 @@ greyscale_simd:
 	#r10 = loop counter
 	#rsi = amount of pixels
 
-	movdqa xmm1, xmmword ptr[blueWeight]	#blue weighting
-	movdqa xmm2, xmmword ptr[greenWeight]	#green weighting
-	movdqa xmm3, xmmword ptr[redWeight]	#red weighting
+	movdqu xmm3, xmmword ptr[redWeight]	#blue weighting
+	movdqu xmm4, xmmword ptr[greenWeight]	#green weighting
+	movdqu xmm5, xmmword ptr[redWeight]	#red weighting
+	movdqu xmm6, xmmword ptr[sumWeight]	#red weighting
 
 	xor r10, r10
-	imul rsi, rcx 		#pixelAmount = height * width
+	imul rsi, rdx 		#pixelAmount = height * width
+
+	imul rsi, 2       #because pixels are a word
 
 	jmp .Lload
 
 .Lconvert:
 
+#Reading:
 
-	movdqu xmm0,  xmmword ptr[rdi + r10]
+	#Blue channelblock
+	movdqu xmm1,  xmmword ptr[rdi + r10]
+
+	#pmullw xmm1, xmm3
+
+	movdqa xmm0, xmm1
+
+
+	#Green channelblock
+	add r10, rsi
+
+  movdqu xmm1,  xmmword ptr[rdi + r10]
+
+	#pmullw xmm1, xmm4
+
+	paddw xmm0, xmm1
+
+
+	#Red channelblock
+
 
 	add r10, rsi
-	movdqu xmm4,  xmmword ptr[rdi + r10]
+	movdqu xmm1,  xmmword ptr[rdi + r10]
 
-	paddw xmm0, xmm4
+	#pmullw xmm1, xmm5
 
-
-	add r10, rsi
-	movdqu xmm4,  xmmword ptr[rdi + r10]
-
-	paddw xmm0, xmm4
+	paddw xmm0, xmm1
 
 
-	add r10, 8
+
+	PSRLW xmm0, xmm6
+
+
+
+#writing:
+
+
+	#red
+
+	movdqu xmmword ptr[rdi + r10], xmm0
+
+	#green
+	sub r10, rsi
+	movdqu xmmword ptr[rdi + r10], xmm0
+
+	#blue
+	sub r10, rsi
+	movdqu xmmword ptr[rdi + r10], xmm0
+
+
+	add r10, 16
 
 .Lload:
 
+	sub rsi, 16 # Pixels that do not fir into xmm0
 
+	cmp r10, rsi
+
+	jge .LlastPixels
+
+	add rsi, 16
+
+	jmp .Lconvert
 
 
 .LlastPixels: 	#Pixels that do not fit into a simd
 
+	xor r10, r10
+	add rsi, 16
+
+ ret
+
+ add rsi, 16
+
+ add rdi, r10
+
+ sub rsi, r10
+
+ shr rsi,1
+
+ mov rdx, 1
 
 
 
-
-ret
+ jmp greyscale
