@@ -8,7 +8,7 @@ redWeight: 			.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 greenWeight: 		.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 blueWeight: 		.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 
-sumWeight:   		.word 0x0001,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
+sumWeight:   		.word 0x0002,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 
 
@@ -118,11 +118,6 @@ greyscale:
 
 
 greyscale_simd:
-	#push rdi
-	#push rsi
-  #push rdx
-
-
 
 	#xmm0 = Color channel sum
 	#r10 = loop counter
@@ -133,40 +128,30 @@ greyscale_simd:
 	movdqu xmm5, xmmword ptr[redWeight]	#red weighting
 	movdqu xmm6, xmmword ptr[sumWeight]	#sum weighting
 
-	xor r10, r10
+	xor r10, r10					#counter = 0
 	imul rsi, rdx 				#pixelAmount = height * width
 
-	imul rsi, 2       			#because pixels are a word
+	imul rsi, 2       			#because pixels channels are a word
 
 	jmp .Lload
 
 .Lconvert:
 
-#Reading:
+#Reading + Calculation:
 
-	#Blue channelblock
-	movdqu xmm1,  xmmword ptr[rdi + r10]
-
-	#pmullw xmm1, xmm3
-
-	movdqa xmm0, xmm1
+	#Blue
+	movdqu xmm0,  xmmword ptr[rdi + r10]
 
 
-	#Green channelblock
+	#Green
 	add r10, rsi
 	movdqu xmm1,  xmmword ptr[rdi + r10]
-
-	#pmullw xmm1, xmm4
-
 	paddw xmm0, xmm1
 
 
-	#Red channelblock
+	#Red
 	add r10, rsi
 	movdqu xmm1,  xmmword ptr[rdi + r10]
-
-	#pmullw xmm1, xmm5
-
 	paddw xmm0, xmm1
 
 
@@ -179,7 +164,6 @@ greyscale_simd:
 
 
 	#red
-
 	movdqu xmmword ptr[rdi + r10], xmm0
 
 	#green
@@ -191,13 +175,13 @@ greyscale_simd:
 	movdqu xmmword ptr[rdi + r10], xmm0
 
 
-	add r10, 16
+	add r10, 16 					# Amount of bytes we read (8 word color channels)
 
 .Lload:
 
-	sub rsi, 16 # Pixels that do not fir into xmm0
+	sub rsi, 16 					# Pixels that do not fir into xmm0
 
-	cmp r10, rsi
+	cmp r10, rsi 					#if(r10 >= rsi - 16)
 
 	jge .LlastPixels
 
@@ -206,12 +190,10 @@ greyscale_simd:
 	jmp .Lconvert
 
 
-.LlastPixels: 	#Pixels that do not fit into a simd
+.LlastPixels: 					#Pixels that do not fit into a simd (Could not work)
 
-	xor r10, r10
-	add rsi, 16
-
- ret
+ xor r10, r10 					#for greyscale to work
+ add rsi, 16  					#for greyscale to work
 
  add rsi, 16
 
