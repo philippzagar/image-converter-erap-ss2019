@@ -8,7 +8,7 @@ redWeight: 			.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 greenWeight: 		.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 blueWeight: 		.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 
-sumWeight:   		.word 0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
+sumWeight:   		.word 0x0001,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 
 
@@ -199,7 +199,7 @@ greyscale_simd:
 
 	cmp r10, rsi
 
-	jge .Ldivide
+	jge .LlastPixels
 
 	add rsi, 16
 
@@ -222,85 +222,3 @@ greyscale_simd:
  shr rsi,1
 
  mov rdx, 1
-
-
-
- .Ldivide:
-
- #pop rdx
- #pop rsi
- add rsi, 16
- #pop rdi
-
-
-	 #mov rcx, rdx 		#moved height for devision
-
-	 #imul rsi, rcx 		#pixelAmount = height * width
-	 #imul rsi, 2				#each pixel is a word
-
-
-
-
-	 xor r10, r10 		#loop Counter = 0
-
-
- .Lloop2:
-
-	 cmp r10, rsi
-	 jge .Lend2		#if(r10 >= pixelAmount) --> end loop
-
-
-
-
-	 xor rax, rax		#For copying from Memory
-	 xor r8, r8			#For storing average
-
-	 mov ax, [rdi + r10] 	#Blue channel
-
-	 mov r8, 3
-
-	 xor rdx, rdx		#For devision
-
-	 div r8
-
-	 mov [rdi + r10], al
-
-
-
-
-
-	 xor rax, rax		#For copying from Memory
-	 xor r8, r8			#For storing average
-
-	 add r10, rsi
-	 mov ax, [rdi + r10] 	#Blue channel
-
-	 mov r8, 3
-
-	 xor rdx, rdx		#For devision
-
-	 div r8
-
-	 mov [rdi + r10], al
-
-
-	 add r10, rsi
-	 mov ax, [rdi + r10] 	#Blue channel
-
-	 mov r8, 3
-
-	 xor rdx, rdx		#For devision
-
-	 div r8
-
-	 mov [rdi + r10], al
-
-	 sub r10, rsi
-	 sub r10, rsi
-
-
-	 add r10, 2 			 #Move to the next pixel
-	 jmp .Lloop2
-
- .Lend2:
-	 ret
