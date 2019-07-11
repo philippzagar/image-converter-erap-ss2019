@@ -5,6 +5,8 @@
 
 .data
 
+#Note have to be written in little endian
+
 gaussMatrix: .byte 0x01,0x02,0x01,0x02,0x04,0x02,0x01,0x02,0x01
 
 devision15: .word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
@@ -360,7 +362,7 @@ blur_colour:
 	cmp r13, 3
 	jge .Lendd_rgb			#geht durch rgb durch (0,1,2)
 	xor r10, r10
-	
+
 
 .LloopHeight_colour:
 
