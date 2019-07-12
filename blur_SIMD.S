@@ -13,7 +13,6 @@ devision15: .word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 cleanValues:.word 0x0001,0x0001,0x0001, 0x0000,0x0000,0x0000,0x0000,0x0000
 TopBottom: .word 0x0001, 0x0002, 0x0001,0x0000,0x0000,0x0000,0x0000,0x0000
 middle: .word 0x0002, 0x0004, 0x0002,0x0000,0x0000,0x0000,0x0000,0x0000
-
 incSIMD: .word 0x0001,0x0000,0x0000,0x0000,0x0000,0x0000,0x00000,0x00000
 
 
@@ -53,16 +52,35 @@ blur_simd:
   #Check if middle left exists
 
 
+  mov r8, r11         #move width Counter
+  dec r8              #if(rbx < 0)
+  #---> if does not exist all left dont exist
 
-  #check if middle write exists
+
+
+
+  #check if middle wright exists
+  mov r8, r11
+  inc r8
+  #---> if does not exist all right dont exist
+
+
 
 
 
   #check if top exists
 
+  mov r8, r10
+  inc r10
+
 
 
   #check if bottom exists
+
+  mov r8, r10
+  dec r8
+
+
 
 
 
@@ -71,20 +89,43 @@ blur_simd:
 .Lcalculation:
 
   paddw xmm0, xmm1
-  paddw xmm0, xmm2
+  paddw xmm0, xmm2  #
 
 
   phaddw xmm0
-  phaddd
+  phaddd xmm0 #64 bit answer in array
 
+  #decide between 16 bit devision (shift 4) or asm
 
+  movd   eax,xmm0 #otherwise we would override written pixels
 
 
 
 .writing_pixel:
 
+  mov r8, r10
+  imul r8, rdx
+  add r8, r11
+
+  imul rbx, 2
+
+  mov [rsi + r8], al
+
+  mov r9, rcx
+  imul r9, rdx
+  shl rdx, 1
+  add r8, r9
 
 
+  mov [rsi + r8], al
+
+
+  add r8, r9
+
+  mov [rsi + r8], al
+
+  sub r8, r9
+  sub r8, r9
 
 
 jmp .Lloop_Width
