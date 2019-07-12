@@ -6,11 +6,11 @@
 
 #Note have to be written in little endian
 
-redWeight: 			.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
-greenWeight: 		.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
-blueWeight: 		.word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
+redWeight: 			.word 0x0002,0x0002,0x0002,0x0002,0x0002,0x0002,0x0002,0x0002
+greenWeight: 		.word 0x0009,0x0009,0x0009,0x0009,0x0009,0x0009,0x0009,0x0009
+blueWeight: 		.word 0x0005,0x0005,0x0005,0x0005,0x0005,0x0005,0x0005,0x0005
 
-sumWeight:   		.word 0x0002,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
+sumWeight:   		.word 0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 
 
@@ -143,17 +143,20 @@ greyscale_simd:
 
 	#Blue
 	movdqu xmm0,  xmmword ptr[rdi + r10]
+	pmullw xmm1, xmm3
 
 
 	#Green
 	add r10, rsi
 	movdqu xmm1,  xmmword ptr[rdi + r10]
+	pmullw xmm1, xmm4
 	paddw xmm0, xmm1
 
 
 	#Red
 	add r10, rsi
 	movdqu xmm1,  xmmword ptr[rdi + r10]
+	pmullw xmm1, xmm5
 	paddw xmm0, xmm1
 
 
@@ -194,10 +197,10 @@ greyscale_simd:
 
 .LlastPixels: 					#Pixels that do not fit into a simd (Could not work)
 
- xor r10, r10 					#for greyscale to work
- add rsi, 16  					#for greyscale to work
+	ret
 
- add rsi, 16
+
+ add rsi, 16  					#for greyscale to work
 
  add rdi, r10
 
@@ -205,4 +208,6 @@ greyscale_simd:
 
  shr rsi,1
 
- mov rdx, 1
+ mov rdx, 1							#Picture 1xr10
+
+ jmp greyscale
