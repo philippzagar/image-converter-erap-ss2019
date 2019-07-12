@@ -25,13 +25,13 @@ devision15: .word 0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004,0x0004
 blur:
 	push r15 				# width
 	push rbx 				# For adressing pixels
+	push r12 				# save the value for division
+	push r14 				# speicherort für blurberechnung
 
 	mov r15, rdx 			# moved width for division
 	xor rdx, rdx
 
 
-	push r12 				# save the value for division
-	push r14 				# speicherort für blurberechnung
 
 
 	xor r10, r10 			#Height counter = 0
@@ -65,7 +65,7 @@ blur:
 	imul rbx, r15 			# Multiply by Width --> all pixels before
 	add rbx, r11 			# in which pixel we are
 
-	imul rbx, 3 			# 3 Byte per pixel
+	imul rbx, 2 			# 3 Byte per pixel
 
 	mov al, [rdi + rbx]
 	imul rax, 4
@@ -89,7 +89,7 @@ blur:
 
 	dec rbx 				# wegen linkes element
 
-	imul rbx, 3
+	imul rbx, 2     #Because of word
 
 	mov al, [rdi + rbx]
 	imul rax, 2
@@ -115,7 +115,7 @@ blur:
 
 	inc rbx 				# wegen rechts
 
-	imul rbx, 3
+	imul rbx, 2
 
 	mov al, [rdi + rbx]
 	imul rax, 2
@@ -139,7 +139,7 @@ blur:
 	imul rbx, r15
 	add rbx, r11
 
-	imul rbx, 3
+	imul rbx, 2
 
 	mov al, [rdi + rbx]
 	imul rax, 2
@@ -167,7 +167,7 @@ blur:
 
 	dec rbx 				# wegen linkes element
 
-	imul rbx, 3
+	imul rbx, 2
 
 	mov al, [rdi + rbx]
 	imul rax, 1
@@ -196,7 +196,7 @@ blur:
 
 	inc rbx 				# wegen rechts
 
-	imul rbx, 3
+	imul rbx, 2
 
 	mov al, [rdi + rbx]
 	imul rax, 1
@@ -221,7 +221,7 @@ blur:
 	imul rbx, r15
 	add rbx, r11
 
-	imul rbx, 3
+	imul rbx, 2
 
 	mov al, [rdi + rbx]
 	imul rax, 2
@@ -247,7 +247,7 @@ blur:
 
 	dec rbx 				# wegen links
 
-	imul rbx, 3
+	imul rbx, 2
 
 	mov al, [rdi + rbx]
 	imul rax, 1
@@ -275,7 +275,7 @@ blur:
 
 	inc rbx 				# wegen rechts
 
-	imul rbx, 3
+	imul rbx, 2
 
 	mov al, [rdi + rbx]
 	imul rax, 1
@@ -294,7 +294,7 @@ blur:
 	mov rbx, r10 			# which level we are on[rdi + rbx]
 	imul rbx, r15 			# Multiply by the pixels of before
 	add rbx, r11 			# in which pixel we are
-	imul rbx, 3		  		# 3 Byte per pixel
+	imul rbx, 2		  		# 3 Byte per pixel
 
 	mov rax, r14
 
@@ -303,11 +303,25 @@ blur:
 
 	# writing data back
 	mov [rsi + rbx], al		# Blue
-	mov [rsi + rbx + 1], al	# Green
-	mov [rsi + rbx + 2], al	# Red
+
+	mov rdx, r15
+	imul rdx, rcx
+	shl rdx, 1
+	add rbx, rdx
+
+	mov [rsi + rbx], al	# Green
+
+	add rbx, rdx
+
+	mov [rsi + rbx ], al	# Red
+
+
+	sub rbx, rdx
+	sub rbx, rdx
+
 
 	# LloopWidth erhöhen
-	inc r11
+	add r11, 1
 	jmp .LloopWidth
 
 
