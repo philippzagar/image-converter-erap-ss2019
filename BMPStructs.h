@@ -1,7 +1,6 @@
 typedef struct
 {
     char signature[2];
-    // Alignment int 4 byte!!!
     unsigned int fileSize;
     unsigned int reserved;
     unsigned int offset;
