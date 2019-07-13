@@ -8,13 +8,12 @@
 
 #include "BMPStructs.h"
 
-// Assembly Functions
-
-  //greyscale
+/***** Assembly Functions ******/
+  // Greyscale
   extern void greyscale(RGB *rgbValuesOut, int width, int height);
   extern void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
 
-  // Blur:
+  // Blur
   extern void blur(RGB* in, RGB* out, int width, int height);
   extern void blur_colour(RGB* in, RGB* out, int width, int height);
 
