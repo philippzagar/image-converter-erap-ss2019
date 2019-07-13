@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <setjmp.h>
-
+// Libjpeg Library
 //#include "./libjpeg-master/jpeglib.h"
 
 #include "BMPStructs.h"
@@ -14,24 +14,28 @@ extern void greyscale_simd(RGB* out, int width, int height); // Runs with greysc
 
 extern void blur(RGB* in, RGB* out, int width, int height);
 
-// C Functions
+/***** C Functions ******/
+// BMP Functions
 BMPHeader* readHeader(FILE* inFile);
 BMPImageInfo* readInfo(FILE* inFile);
 bool checkBMPImage(BMPHeader* header, BMPImageInfo* info);
-RGB* readPixels(FILE* inFile, BMPImageInfo* info);
-bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues);
-RGB* convertRGBtoGreyscale(RGB* rgbValues);
-RGB* convolutionRGB(RGB* rgbValues);
-bool endsWith(char *str, char *suffix);
+RGB* readBMPImage(FILE* inFile, BMPImageInfo* info);
+bool writeBMPImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues);
+// JPG Functions
+RGB* read_JPEG_file (FILE* infile);
+void save_scanline(unsigned char* buffer, RGB* rgbValues, int actualHeight);
+bool write_JPEG_file (FILE* outfile, int quality, RGB* rgbValues);
+// RGB Conversion Functions
 RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues);
 RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues);
 RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues);
 RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues);
+// Additional Functions
+bool endsWith(char *str, char *suffix);
 
-RGB* read_JPEG_file (FILE* infile);
-void save_scanline(unsigned char* buffer, RGB* rgbValues, int actualHeight);
-
-bool write_JPEG_file (FILE* outfile, int quality, RGB* rgbValues);
+// C implemented Greyscale and Convolution
+RGB* convertRGBtoGreyscale(RGB* rgbValues);
+RGB* convolutionRGB(RGB* rgbValues);
 
 // Global variables
 unsigned int global_image_height;
@@ -41,25 +45,34 @@ unsigned int global_image_width;
 // Main Routine
 int main(int argc, char** argv) {
 
-    // Input File
+    // Input/Output File
     FILE *inFile, *outFile;
-    RGB* rgbValues;
+    // BMP Header
     BMPHeader* header;
     BMPImageInfo* info;
-
-    // Getting file name
+    // RGB Values
+    RGB* rgbValues;
+    // File path
     char relativePath[100];
 
     /*
+    // Read File Name from User
     printf("Enter the file name: ");
-    scanf("%s", &relativePath[2]);
+    !!!! fgets verwenden !!!!
+    fgets(&relativePath[2], 100, stdin);
+    //scanf("%s", &relativePath[2]);
 
+    // Make Filename to relative path
     relativePath[0] = '.';
     relativePath[1] = '/';
     */
 
     // Just for testing
     strcpy(relativePath, "./lena.bmp");
+
+    // Check File format
+    bool isJPG = endsWith(relativePath, ".jpg") || endsWith(relativePath, ".JPG");
+    bool isBMP = endsWith(relativePath, ".bmp") || endsWith(relativePath, ".BMP");
 
     // Open the file with given file name
     inFile = fopen(relativePath, "rb");
@@ -70,38 +83,26 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    bool isJPG = endsWith(relativePath, ".jpg") || endsWith(relativePath, ".JPG");
-
     // JPG File
     if(isJPG) {
         /*
+        // Read JPG File
         rgbValues = read_JPEG_file(inFile);
 
+        // Check for error while reading the JPG File
         if(!rgbValues) {
             printf("Error while reading JPG file\n");
             return -1;
         }
          */
-    } else {
+    // BMP File
+    } else if(isBMP){
         // Reading header of BMP File
         header = readHeader(inFile);
         if(!header) {
             printf("Error while reading header\n");
             return -1;
         }
-
-        /*
-        printf("%x", header.signature[0]);
-        printf("\n");
-        printf("%x", header.signature[1]);
-        printf("\n");
-        printf("%u", header.fileSize);
-        printf("\n");
-        printf("%08x", header.reserved);
-        printf("\n");
-        printf("%08x", header.offset);
-        printf("\n");
-        */
 
         // Reading image info of BMP file
         info = readInfo(inFile);
@@ -110,15 +111,6 @@ int main(int argc, char** argv) {
             return -1;
         }
 
-        /*
-        printf("%u", info.height);
-        printf("\n");
-        printf("%u", info.width);
-        printf("\n");
-        printf("%u", info.numColors);
-        printf("\n");
-         */
-
         // Check if BMP image is valid (no compression, etc.)
         if(!checkBMPImage(header, info)) {
             printf("Error - BMP image is not valid\n");
@@ -126,14 +118,23 @@ int main(int argc, char** argv) {
         }
 
         // Read RGB values from picture
-        rgbValues = readPixels(inFile, info);
+        rgbValues = readBMPImage(inFile, info);
         if(!rgbValues) {
             printf("Error while reading RGB values from file\n");
             return -1;
         }
+    // Wrong File Format
+    } else {
+        printf("Wrong file format - only BMP and JPG supported!\n");
+        return -1;
     }
 
+    // Close open file
+    if(inFile != NULL) {
+        fclose(inFile);
+    }
 
+    // Assembly Functions
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
     RGBcolorByte* rgbSIMD = convertRGBtoSIMDByte(rgbValues);
@@ -166,8 +167,10 @@ int main(int argc, char** argv) {
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+    // JPG File
     if(isJPG) {
         /*
+        // Open output file
         outFile = fopen("./test2.jpg", "wb");
 
         if (!outFile) {
@@ -175,48 +178,18 @@ int main(int argc, char** argv) {
             return -1;
         }
 
+        // Writing JPEG file to memory
         if(!write_JPEG_file(outFile, 80, rgbValues)) {
             printf("Error while writing JPG file\n");
             return -1;
         }
 
-         */
-        /*
-         * Write as a BMP image
-        BMPHeader* header = (BMPHeader*) malloc(sizeof(BMPHeader));
-        header->signature[0] = 0x42;
-        header->signature[1] = 0x4D;
-
-        int temp = 0;
-        if(global_image_width * sizeof(RGB) % 4 != 0) {
-            temp = 4 - (global_image_width * sizeof(RGB) % 4);
-            temp *= global_image_height;
-        }
-
-        header->fileSize = 54 + global_image_width * global_image_height * sizeof(RGB) + temp;
-        header->offset = 54;
-
-        BMPImageInfo* info = (BMPImageInfo*) malloc(sizeof(BMPImageInfo));
-
-        info->width = global_image_width;
-        info->height = global_image_height;
-        info->headerSize = 40;
-        info->bitDepth = 24;
-        info->importantColors = 0;
-        info->numColors = 0;
-        info->compression = 0;
-        info->planeCount = 1;
-        info->compressedImageSize = global_image_width * global_image_height * sizeof(RGB) + temp;
-        info->horizontalResolution = 72;
-        info->verticalResolution = 72;
-
-        writeImage(fopen("./test2.bmp", "wb"), header, info, rgbVal);
-
         if(outFile != NULL) {
             fclose(outFile);
         }
 
-        */// BMP File
+        */
+    // BMP File
     } else {
         // Open file to write back the picture to memory
         outFile = fopen("./lena_grey.bmp", "wb");
@@ -226,7 +199,7 @@ int main(int argc, char** argv) {
         }
 
         // Write image with header and info back to memory
-        if(!writeImage(outFile, header, info, rgbValues)) {
+        if(!writeBMPImage(outFile, header, info, rgbValues)) {
             printf("Error while writing image to memory\n");
             return -1;
         }
@@ -245,11 +218,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Close open files
-    if(inFile != NULL) {
-        fclose(inFile);
-    }
-
     // Clear allocated space
     if(rgbValues != NULL) {
         free(rgbValues);
@@ -260,11 +228,6 @@ int main(int argc, char** argv) {
 
 // Reading the Header of the BMP File
 BMPHeader* readHeader(FILE* inFile) {
-    /*
-     * if( fread(&header, sizeof(BMPHeader), 1, inFile) != 1 )
-        return -1; // Manage error and close file
-        */
-
     BMPHeader* header = (BMPHeader*) malloc(sizeof(BMPHeader));
 
     // Read Header data one by one because of alignment
@@ -274,7 +237,7 @@ BMPHeader* readHeader(FILE* inFile) {
         fread(&header->reserved, sizeof(unsigned int), 1, inFile) != 1  ||
         fread(&header->offset, sizeof(unsigned int), 1, inFile) != 1 )
     {
-        return NULL; // Manage error and close file
+        return NULL;
     }
 
     return header;
@@ -285,7 +248,7 @@ BMPImageInfo* readInfo(FILE* inFile) {
     BMPImageInfo* info = (BMPImageInfo*) malloc(sizeof(BMPImageInfo));
 
     if( fread(info, sizeof(BMPImageInfo), 1, inFile) != 1 ) {
-        return NULL; // Manage error and close file
+        return NULL;
     }
 
     return info;
@@ -300,9 +263,8 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
 
     // Check if the header size is correct, we assume the header is a 40 byte info header
     if(info->headerSize != 40) {
-        printf("Error - Header size not correct!\n");
+        //printf("Error - Header size not correct!\n");
         printf("Header size is %d\n", info->headerSize);
-        //return false;
     }
 
     // Check if the size of the header is correct -> header (14 byte) + info size is the offset, where the pixel data begins
@@ -335,6 +297,7 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
         return false;
     }
 
+    // Set global variables
     global_image_width = info->width;
     global_image_height = info->height;
 
@@ -342,9 +305,9 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
 }
 
 // Read RGB Pixels from BMP image
-RGB* readPixels(FILE* inFile, BMPImageInfo* info) {
+RGB* readBMPImage(FILE* inFile, BMPImageInfo* info) {
     // Allocate memory space for RGB array of pixels
-    RGB *rgbValues = (RGB*) malloc(info->width * info->height * sizeof(RGB));
+    RGB *rgbValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
 
     // Moving offset of the info header because the size can vary
     if(info->headerSize != 40) {
@@ -359,20 +322,22 @@ RGB* readPixels(FILE* inFile, BMPImageInfo* info) {
     // Alignment of every new row in the picture
     int alignment;
 
-    if(((info->width * sizeof(RGB)) % 4) == 0) {
+    // Calculate alignment
+    if(((global_image_width * sizeof(RGB)) % 4) == 0) {
         alignment = 0;
     } else {
-        alignment = 4 - (info->width * sizeof(RGB)) % 4;
+        alignment = 4 - (global_image_width * sizeof(RGB)) % 4;
     }
 
     // Read values
-    for(unsigned int i = 0; i < info->height; i++) {
+    for(unsigned int i = 0; i < global_image_height; i++) {
         // Read the values from the file to the right position in the RGB array
-        if( fread(rgbValues + (i * info->width), sizeof(RGB), info->width, inFile) != info->width ) {
+        if( fread(rgbValues + (i * global_image_width), sizeof(RGB), global_image_width, inFile) != global_image_width ) {
             printf("Error - Reading RGB values!\n");
             return NULL;
         }
 
+        // Moving read pointer because of alignment
         if(fseek(inFile, alignment, SEEK_CUR) != 0) {
             printf("Error - Moving offset!\n");
             return NULL;
@@ -380,21 +345,11 @@ RGB* readPixels(FILE* inFile, BMPImageInfo* info) {
 
     }
 
-    // Output loop
-    /*
-    for(int x = 250000; x < 262144; x++) {
-        printf("%i: ", x);
-        printf("%02x ", rgbValues[x].blue);
-        printf("%02x ", rgbValues[x].green);
-        printf("%02x    ", rgbValues[x].red);
-    }
-    */
-
     return rgbValues;
 }
 
 // Write Image with the header
-bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues) {
+bool writeBMPImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbValues) {
     // Write Header
     if( fwrite(&header->signature, sizeof(char), 2, outFile) != 2 ) {
         return false;
@@ -433,15 +388,16 @@ bool writeImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rgbVa
     if(((info->width * sizeof(RGB)) % 4) == 0) {
         alignment = 0;
     } else {
-        alignment = 4 - (info->width * sizeof(RGB)) % 4;
+        alignment = 4 - (global_image_width * sizeof(RGB)) % 4;
     }
 
     // Write RGB values row for row because of alignment
-    for(unsigned int i = 0; i < info->height; i++) {
-        if( fwrite(rgbValues + i * info->width, sizeof(RGB), info->width, outFile) != info->width ) {
+    for(unsigned int i = 0; i < global_image_height; i++) {
+        if( fwrite(rgbValues + i * global_image_width, sizeof(RGB), global_image_width, outFile) != global_image_width ) {
             return false;
         }
 
+        // Move write pointer because of alignment
         if(i != info->height-1) {
             if(fseek(outFile, alignment, SEEK_CUR) != 0) {
                 printf("Error - Moving offset!\n");
@@ -555,12 +511,15 @@ RGB* convolutionRGB(RGB* rgbValues) {
 }
 
 // Converts the RGB values to a different data model in memory, because SIMD in assembly needs it
+// Color is of type word
+// Memory model rrrrr/ggggg/bbbbbb
 RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues) {
     long countPixels = global_image_width * global_image_height;
 
-    // Allocate new array for all RGB values
+    // Allocate new array for all RGB values (color is a word)
     RGBcolorWord* rgbNewValues = (RGBcolorWord*) malloc(3 * (countPixels * 2 * sizeof(unsigned char)));
 
+    // Write Pixels to the new array, where a color is a word
     for(long i = 0; i < countPixels; i++) {
         rgbNewValues[i].color = rgbValues[i].red;
         rgbNewValues[i + countPixels].color = rgbValues[i].green;
@@ -577,6 +536,7 @@ RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues) {
     // Allocate new array for all RGB values
     RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
 
+    // Convert the Word values back to the normal RGB format, where a color is a char
     for(long i = 0; i < countPixels; i++) {
         rgbNewValues[i].red = rgbValues[i].color;
         rgbNewValues[i].green = rgbValues[i + countPixels].color;
@@ -587,12 +547,15 @@ RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues) {
 }
 
 // Converts the RGB values to a different data model in memory, because SIMD in assembly needs it
+// Color is of type byte
+// Memory model rrrrr/ggggg/bbbbbb
 RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues) {
     long countPixels = global_image_width * global_image_height;
 
     // Allocate new array for all RGB values
     RGBcolorByte* rgbNewValues = (RGBcolorByte*) malloc(3 * (countPixels * sizeof(unsigned char)));
 
+    // Write Pixels to the new array, where a color is a byte
     for(long i = 0; i < countPixels; i++) {
         rgbNewValues[i].color = rgbValues[i].red;
         rgbNewValues[i + countPixels].color = rgbValues[i].green;
@@ -609,6 +572,7 @@ RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues) {
     // Allocate new array for all RGB values
     RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
 
+    // Convert the byte values back to the normal RGB format, where a color is a char
     for(long i = 0; i < countPixels; i++) {
         rgbNewValues[i].red = rgbValues[i].color;
         rgbNewValues[i].green = rgbValues[i + countPixels].color;
@@ -621,15 +585,21 @@ RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues) {
 // Check if string ends with a certain suffix
 bool endsWith(char *str, char *suffix)
 {
-    if (!str || !suffix)
+    if (!str || !suffix) {
         return false;
+    }
+
     size_t lenstr = strlen(str);
     size_t lensuffix = strlen(suffix);
-    if (lensuffix > lenstr)
+
+    if (lensuffix > lenstr) {
         return false;
+    }
+
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
+// JPEG stuff
 // #include "./JPG_stuff.c"
 
 // -ljpeg

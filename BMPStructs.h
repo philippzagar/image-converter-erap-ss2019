@@ -1,9 +1,3 @@
-//
-// Created by Philipp on 14.06.2019.
-//
-
-#include <stdint.h>
-
 typedef struct
 {
     char signature[2];
