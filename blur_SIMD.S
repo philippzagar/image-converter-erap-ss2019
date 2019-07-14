@@ -34,7 +34,7 @@ middle_kill_both: .word 0x0000,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
   # r8 for adressing
   # r9 channel size
   # rax writing to Memory
-   
+
 
   #xmm0 --> middle matrix Values  |---> Sum of all Values
   #xmm1 --> top matix values      |---> Sum of top and bottom
@@ -113,7 +113,7 @@ blur_simd:
 
   #Cleaning up values **********************************************************
   #Check if middle left exists
-  mov ebx, 16   #for calculating how much to devide
+  mov rbx, 16   #for calculating how much to devide
 
 
 
@@ -145,15 +145,14 @@ blur_simd:
 
   .Lcheck_middle_left:
   paddw xmm1, xmm2    #Both top and bottom can be in one register
-  mov r8, r11         #move width Counter
-  dec r8              #if(rbx < 0)
 
-  cmp r8, 0
+  mov r8, r11         #move width Counter
+  dec r8
+
+  cmp r8, 0           #if(r8 < 0)
 
   jl .Lclean_left
 
-
-  movdqu xmm2, xmm7
 
   .Lcheck_middle_right:
   #check if middle right exists
@@ -253,24 +252,38 @@ ret
   mov r8, r11
   inc r8
   cmp r8, rdx
-  jge .Lclean_left_right
+  jge .Lclean_both
 
-  movdqu xmm2, xmm5 #Kills left values
-  movdqu xmm3, xmm4 #Kills left values
-
-  sub eax, 4    #For devision in non simd
-
-  jmp .Lweighting #Dont want to change register values
+  movdqu xmm2, xmm5 #Kills left values middle
+  movdqu xmm3, xmm4 #Kills left values top and bottom
 
 
-.Lclean_left_right:
+  jmp .Lcalculate_Div
+
+
+
+
+.Lclean_both:
 
 
   movdqu xmm2, xmmword ptr[middle_kill_both]    #Have to load because not enough register
   movdqu xmm3, xmmword ptr[TopBottom_Kill_both]
 
-  sub eax, 8    #For devision in non simd
+  cmp ebx, 12
 
+  jg .Normal
+  je .one 
+
+  .both:
+  sub ebx, 4
+  jmp .Lweighting
+
+  .one:
+  sub ebx, 6
+  jmp .Lweighting
+
+  .Normal:
+  sub ebx, 8
   jmp .Lweighting
 
 
@@ -280,5 +293,28 @@ ret
   movdqu xmm2, xmmword ptr[middle_kill_right]
   movdqu xmm3, xmmword ptr[TopBottom_Kill_right]
 
-  sub eax, 4
-  jmp .Lweighting
+
+  jmp .Lcalculate_Div
+
+
+
+.Lcalculate_Div:
+
+
+  cmp ebx, 12
+  jg .LnormalSub
+  je .L1overlappingSub
+
+  .L2ocerlappingSub:
+
+    sub ebx, 2
+    jmp .Lweighting #Dont want to change register values
+
+  .L1overlappingSub:
+
+    sub ebx, 3
+    jmp .Lweighting #Dont want to change register values
+
+  .LnormalSub:
+    sub ebx, 4
+    jmp .Lweighting #Dont want to change register values
