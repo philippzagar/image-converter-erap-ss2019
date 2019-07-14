@@ -19,6 +19,8 @@ extern void greyscale_simd(RGB* out, int width, int height); // Runs with greysc
 extern void blur(RGB* in, RGB* out, int width, int height);
 extern void blur_colour(RGB* in, RGB* out, int width, int height);
 
+extern void blur_simd (RGB* in, RGB* out, int width, int height);
+
 /***** C Functions ******/
 // BMP Functions
 BMPHeader* readHeader(FILE* inFile);
@@ -154,6 +156,9 @@ int main(int argc, char** argv) {
     RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
 
     greyscale_simd(rgbSIMD, info->width, info->height);
+
+    blur_simd(rgbSIMD, rgbSIMD, info->width, info->height);
+
 
     RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
 
