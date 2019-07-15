@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
 
     greyscale_simd(rgbSIMD, info->width, info->height);
 
-    blur_simd(rgbSIMD, rgbSIMD, info->width, info->height);
+    //blur_simd(rgbSIMD, rgbSIMD, info->width, info->height);
 
 
     RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
