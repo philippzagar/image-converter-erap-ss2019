@@ -21,9 +21,9 @@ sumWeight:   		.word 0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 #-------------------Bei der Übergabe--------------------#
 #														#
-#	# rdi = Adress pixel Array (Read and write)			#
-# 	# rsi = width										#
-#	# rdx = height										#
+#	  rdi = Adress pixel Array (Read and write)			#
+# 	rsi = width										#
+#	  rdx = height										#
 #														#
 #	--> Keine Rückgabe erwartet							#
 #-------------------------------------------------------#
@@ -109,15 +109,63 @@ greyscale_simd:
 
 .LlastPixels: 		#Pixels that do not fit into a simd (Could not work)
 
-
  add rsi, 16  		#for greyscale to work
 
- add rdi, r10
 
- sub rsi, r10
 
- shr rsi,1
+ .Lloop_grey_single:
 
- mov rdx, 1		#Picture 1xr10
+ 	cmp r10, rsi
+ 	jge .Lend		#if(r10 >= pixelAmount) --> end loop
 
- jmp greyscale
+
+ 	xor rax, rax		#For copying from Memory
+ 	xor r8, r8		#For storing average
+
+ 	mov al, [rdi + r10] 	#Blue channel
+
+	imul eax, 2
+	add r8d, eax
+
+ 	add r10, rsi  		#Next Color channelblock
+
+	xor eax, eax #maybe not needed
+
+ 	mov al, [rdi+ r10 ] 	#Green channel
+
+
+
+	imul eax, 9
+	add r8d, eax
+
+ 	add r10, rsi  		#Next Color channelblock
+
+
+	xor eax, eax
+
+ 	mov al, [rdi + r10 ]	#Red channel
+	
+	imul eax, 2
+	add r8d, eax
+
+ 	mov eax, r8d
+
+
+
+	shr eax, 4
+
+ 	mov [rdi+ r10], al	#Red channel
+
+ 	sub r10, rsi   		#Moving back a channelblock
+ 	mov [rdi + r10], al  	#Blue channel
+
+
+ 	sub r10, rsi    	#Moving back a channelblock
+ 	mov [rdi + r10], al	#Green channel
+
+
+ 	add r10, 2 		#Move to the next pixel
+ 	jmp .Lloop_grey_single
+
+ .Lend:
+ 	ret
