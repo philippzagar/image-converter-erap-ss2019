@@ -3,15 +3,12 @@
 
 .data  #Note have to be written in little endian
 
-devision16Shift: .word 0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
-
-
-#gaussMatrix
+#gaussMatrix that removes unwanted values
 TopBottom:  .word 0x0001,0x0002,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000
 middle:     .word 0x0002,0x0004,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000
 
 TopBottom_Kill_left: .word 0x0001,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
-middle_kill_left: .word 0x0002,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
+mkl: .word 0x0002,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 TopBottom_Kill_right: .word 0x0000,0x0002,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000
 middle_kill_right: .word 0x0000,0x0004,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000
@@ -21,20 +18,19 @@ TopBottom_Kill_both: .word 0x0000,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000,0x00
 middle_kill_both: .word 0x0000,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 .text
+  # void blur(RGB* in, RGB* out, int width, int height)
 
-# void blur(RGB* in, RGB* out, int width, int height)
+	#rdi = Adress for greyscale data
+ 	#rsi = Adress for writing data back
+	#rdx = width
+	#rcx = height
+  #rbx wich devision is used
+  #r10 height counter
+  #r11 width Counter
+  #r8 for adressing
+  #r9 channel size
+  #rax writing to Memory
 
-	# rdi = Adress for greyscale data
- 	# rsi = Adress for writing data back
-	# rdx = width
-	# rcx = height
-  # rbx wich devision is used
-  # r10 height counter
-  # r11 width Counter
-  # r8 for adressing
-  # r9 channel size
-  # rax writing to Memory
-   
 
   #xmm0 --> middle matrix Values  |---> Sum of all Values
   #xmm1 --> top matix values      |---> Sum of top and bottom
@@ -49,13 +45,14 @@ middle_kill_both: .word 0x0000,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 blur_simd:
 
+
   push rbx
 
 
-  movdqu xmm7,  xmmword ptr[middle]     #So one does not have to copy the whole
-  movdqu xmm6,  xmmword ptr[TopBottom]  #time
+  movdqu xmm7,  xmmword ptr[middle]         #Gauss matrix normal middle
+  movdqu xmm6,  xmmword ptr[TopBottom]      #Gauss matrix normal top/bottom
 
-  movdqu xmm5, xmmword ptr[middle_Kill_left]
+  movdqu xmm5, xmmword ptr[mkl]
   movdqu xmm4, xmmword ptr[TopBottom_Kill_left]
 
 
@@ -63,6 +60,7 @@ blur_simd:
   mov r9, rcx
   imul r9, rdx
   shl r9, 1
+
 
 
   xor r10, r10          #Height counter = 0
@@ -87,16 +85,21 @@ blur_simd:
 
   #Calculating pixel we are on
   mov r8, r10
-  dec r8        #for lower row
+  dec r8                #for lower row
   imul r8, rdx
   add r8, r11
 
   imul r8, 2
 
+  cmp r8, 0
+  jl .LisNegative
+
 
   movdqu xmm2, xmmword ptr[rdi + r8] #bottom row
 
-  shl rcx, 1    #word next row
+  .LisNegative:
+
+  shl rcx, 1            #word next row
   add r8, rcx
 
   movdqu xmm0, xmmword ptr[rdi + r8] #middle row
@@ -108,12 +111,12 @@ blur_simd:
   movdqu xmm1, xmmword ptr[rdi + r8] #top row
 
 
-  inc rdi #revert to normal adressing
+  inc rdi               #revert to normal adressing
 
 
   #Cleaning up values **********************************************************
   #Check if middle left exists
-  mov ebx, 16   #for calculating how much to devide
+  mov rbx, 16           #for calculating how much to devide
 
 
 
@@ -127,7 +130,7 @@ blur_simd:
   jl .Lcheck_Bottom
 
   sub ebx, 4
-  pxor xmm1, xmm1
+  pxor xmm1, xmm1 #Set to 0 so that it does not influence
 
 
   .Lcheck_Bottom:
@@ -140,20 +143,18 @@ blur_simd:
   jge .Lcheck_middle_left
 
   sub ebx, 4
-
-  pxor xmm1, xmm1
+  pxor xmm2, xmm2      #Set to 0 so that it does not influence
 
   .Lcheck_middle_left:
-  paddw xmm1, xmm2    #Both top and bottom can be in one register
-  mov r8, r11         #move width Counter
-  dec r8              #if(rbx < 0)
+  paddw xmm1, xmm2     #Both top and bottom can be in one register (distributiv)
 
-  cmp r8, 0
+  mov r8, r11          #move width Counter
+  dec r8
+
+  cmp r8, 0           #if(r8 < 0)
 
   jl .Lclean_left
 
-
-  movdqu xmm2, xmm7
 
   .Lcheck_middle_right:
   #check if middle right exists
@@ -164,37 +165,34 @@ blur_simd:
 
   jge .Lclean_right
 
-  movdqu xmm3, xmm6
+  movdqu xmm2, xmm7 #normal middle with cleaning
+  movdqu xmm3, xmm6 #normal top/bottom with cleaning
 
 
-
-
-
-
-
-
+#************************Cleaning and weighting*********************************
 .Lweighting:
 
-    #...
+  pmullw xmm0, xmm2
+  pmullw xmm1, xmm3
 
 
-
+#***********************Add up rows and cloumns*********************************
 .Lcalculation:
 
   paddw xmm0, xmm1  #Vertical adding of matrix (middle + (top+bottom))
 
+  phaddw xmm0, xmm0 #words
+  phaddd xmm0, xmm0 #64 bit answer in array
+
+  movq rax, xmm0
+
+  cmp rbx, 16
+  je .LDevide_Normal
+  jl .LDevide_Special
 
 
-  phaddw xmm0 #words --> 32bit
-  phaddd xmm0 #64 bit answer in array
 
-  #decide between 16 bit devision (shift 4) or asm
-
-  #Hier ein compare für die division
-
-
-
-
+#*********************Writing data to new array*********************************
 .Lwriting_pixel:
 
   #Calculating pixel we are on
@@ -218,28 +216,43 @@ blur_simd:
   sub r8, r9
   sub r8, r9
 
-
-jmp .Lloop_Width
+  inc r11
+  jmp .Lloop_Width
 
 .LCounter_Height_inc:
 	inc r10
-	jmp .LloopHeight
+	jmp .Lloop_Height
 
 
 .Lend:
 pop rbx
 ret
 
-#For Calculating avg ***********************************************************
-.LDevide_SIMD:
+#*******************************************************************************
+#*******************************Helper methods**********************************
+#*******************************************************************************
 
-  #...
+
+#For Calculating avg ***********************************************************
+.LDevide_Normal:
+
+
+  shr rax, 4
+
+
   jmp .Lwriting_pixel
 
 
 .LDevide_Special:
 
-  #...
+
+  mov r8, rdx
+  xor rdx, rdx
+
+  idiv rbx
+
+  mov rdx, r8
+
   jmp .Lwriting_pixel
 
 
@@ -253,24 +266,38 @@ ret
   mov r8, r11
   inc r8
   cmp r8, rdx
-  jge .Lclean_left_right
+  jge .Lclean_both
 
-  movdqu xmm2, xmm5 #Kills left values
-  movdqu xmm3, xmm4 #Kills left values
-
-  sub eax, 4    #For devision in non simd
-
-  jmp .Lweighting #Dont want to change register values
+  movdqu xmm2, xmm5 #Kills left values middle
+  movdqu xmm3, xmm4 #Kills left values top and bottom
 
 
-.Lclean_left_right:
+  jmp .Lcalculate_Div
+
+
+
+
+.Lclean_both:
 
 
   movdqu xmm2, xmmword ptr[middle_kill_both]    #Have to load because not enough register
   movdqu xmm3, xmmword ptr[TopBottom_Kill_both]
 
-  sub eax, 8    #For devision in non simd
+  cmp ebx, 12
 
+  jg .Normal
+  je .one
+
+  .both:
+  sub ebx, 4
+  jmp .Lweighting
+
+  .one:
+  sub ebx, 6
+  jmp .Lweighting
+
+  .Normal:
+  sub ebx, 8
   jmp .Lweighting
 
 
@@ -280,5 +307,28 @@ ret
   movdqu xmm2, xmmword ptr[middle_kill_right]
   movdqu xmm3, xmmword ptr[TopBottom_Kill_right]
 
-  sub eax, 4
-  jmp .Lweighting
+
+  jmp .Lcalculate_Div
+
+
+
+.Lcalculate_Div:
+
+
+  cmp ebx, 12
+  jg .LnormalSub
+  je .L1overlappingSub
+
+  .L2ocerlappingSub:
+
+    sub ebx, 2
+    jmp .Lweighting #Dont want to change register values
+
+  .L1overlappingSub:
+
+    sub ebx, 3
+    jmp .Lweighting #Dont want to change register values
+
+  .LnormalSub:
+    sub ebx, 4
+    jmp .Lweighting #Dont want to change register values

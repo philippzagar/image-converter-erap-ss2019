@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <setjmp.h>
+// For time measurements
+#include <time.h>
 // Libjpeg Library
 //#include "./libjpeg-master/jpeglib.h"
 
@@ -16,6 +18,8 @@ extern void greyscale_simd(RGB* out, int width, int height); // Runs with greysc
 // Blur
 extern void blur(RGB* in, RGB* out, int width, int height);
 extern void blur_colour(RGB* in, RGB* out, int width, int height);
+
+extern void blur_simd (RGB* in, RGB* out, int width, int height);
 
 /***** C Functions ******/
 // BMP Functions
@@ -57,6 +61,10 @@ int main(int argc, char** argv) {
     RGB* rgbValues;
     // File path
     char relativePath[100];
+    // Time measurements
+    double start, end, time = 0;
+    struct timespec t;
+    double factor = 1e-9;
 
     /*
     // Read File Name from User
@@ -76,6 +84,10 @@ int main(int argc, char** argv) {
     // Check File format
     bool isJPG = endsWith(relativePath, ".jpg") || endsWith(relativePath, ".JPG");
     bool isBMP = endsWith(relativePath, ".bmp") || endsWith(relativePath, ".BMP");
+
+    // Time measurement start
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    start = t.tv_sec + t.tv_nsec * factor;
 
     // Open the file with given file name
     inFile = fopen(relativePath, "rb");
@@ -144,6 +156,9 @@ int main(int argc, char** argv) {
     RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
 
     greyscale_simd(rgbSIMD, info->width, info->height);
+
+    blur_simd(rgbSIMD, rgbSIMD, info->width, info->height);
+
 
     RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
 
@@ -261,6 +276,11 @@ int main(int argc, char** argv) {
     if(rgbValues != NULL) {
         free(rgbValues);
     }
+
+    // End time measurements
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    end = t.tv_sec + t.tv_nsec * factor;
+    time = end - start;
 
     return 0;
 }
