@@ -42,7 +42,7 @@ greyscale:
 	mov rcx, rdx 		#moved height for devision
 
 	imul rsi, rcx 		#pixelAmount = height * width
-	imul rsi, 2				#each pixel is a word
+	imul rsi, 2		#each pixel is a word
 
 
 
@@ -56,20 +56,18 @@ greyscale:
 	jge .Lend		#if(r10 >= pixelAmount) --> end loop
 
 
-
-
 	xor rax, rax		#For copying from Memory
-	xor r8, r8			#For storing average
+	xor r8, r8		#For storing average
 
 	mov al, [rdi + r10] 	#Blue channel
-	lea r8d, [eax * 1]		#Add to avg with weighting
+	lea r8d, [eax * 1]	#Add to avg with weighting
 
-	add r10, rsi  				#Next Color channelblock
+	add r10, rsi  		#Next Color channelblock
 
 	mov al, [rdi+ r10 ] 	#Green channel
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
 
-	add r10, rsi  				#Next Color channelblock
+	add r10, rsi  		#Next Color channelblock
 
 	mov al, [rdi + r10 ]	#Red channel
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
@@ -84,17 +82,15 @@ greyscale:
 
 	mov [rdi+ r10], al	#Red channel
 
-	sub r10, rsi    				#Moving back a channelblock
-	mov [rdi + r10], al  	  #Blue channel
+	sub r10, rsi   		#Moving back a channelblock
+	mov [rdi + r10], al  	#Blue channel
 
 
-	sub r10, rsi    				#Moving back a channelblock
+	sub r10, rsi    	#Moving back a channelblock
 	mov [rdi + r10], al	#Green channel
 
 
-
-
-	add r10, 2 			 #Move to the next pixel
+	add r10, 2 		#Move to the next pixel
 	jmp .Lloop
 
 .Lend:
@@ -126,14 +122,14 @@ greyscale_simd:
 	#rsi = amount of pixels
 
 	movdqu xmm3, xmmword ptr[redWeight]	#blue weighting
-	movdqu xmm4, xmmword ptr[greenWeight] #green weighting
+	movdqu xmm4, xmmword ptr[greenWeight] 	#green weighting
 	movdqu xmm5, xmmword ptr[redWeight]	#red weighting
 	movdqu xmm6, xmmword ptr[sumWeight]	#sum weighting
 
-	xor r10, r10					#counter = 0
-	imul rsi, rdx 				#pixelAmount = height * width
+	xor r10, r10		#counter = 0
+	imul rsi, rdx 		#pixelAmount = height * width
 
-	imul rsi, 2       			#because pixels channels are a word
+	imul rsi, 2       	#because pixels channels are a word
 
 	jmp .Lload
 
@@ -180,13 +176,13 @@ greyscale_simd:
 	movdqu xmmword ptr[rdi + r10], xmm0
 
 
-	add r10, 16 					# Amount of bytes we read (8 word color channels)
+	add r10, 16 	# Amount of bytes we read (8 word color channels)
 
 .Lload:
 
-	sub rsi, 16 					# Pixels that do not fir into xmm0
+	sub rsi, 16 	# Pixels that do not fit into xmm0
 
-	cmp r10, rsi 					#if(r10 >= rsi - 16)
+	cmp r10, rsi 	#if(r10 >= rsi - 16)
 
 	jge .LlastPixels
 
@@ -195,12 +191,12 @@ greyscale_simd:
 	jmp .Lconvert
 
 
-.LlastPixels: 					#Pixels that do not fit into a simd (Could not work)
+.LlastPixels: 		#Pixels that do not fit into a simd (Could not work)
 
-	ret
+	#ret
 
 
- add rsi, 16  					#for greyscale to work
+ add rsi, 16  		#for greyscale to work
 
  add rdi, r10
 
@@ -208,6 +204,6 @@ greyscale_simd:
 
  shr rsi,1
 
- mov rdx, 1							#Picture 1xr10
+ mov rdx, 1		#Picture 1xr10
 
  jmp greyscale
