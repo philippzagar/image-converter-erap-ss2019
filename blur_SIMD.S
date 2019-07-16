@@ -47,6 +47,7 @@ blur_simd:
 
 
   push rbx
+	push r12
 
 
   movdqu xmm7,  xmmword ptr[middle]         #Gauss matrix normal middle
@@ -95,20 +96,20 @@ blur_simd:
   jl .LisNegative
 
 
-  movdqu xmm2, xmmword ptr[rdi + r8] #bottom row
+  movdqu xmm2, xmmword ptr[rdi + r8 - 1] #bottom row
 
   .LisNegative:
 
   shl rcx, 1            #word next row
   add r8, rcx
 
-  movdqu xmm0, xmmword ptr[rdi + r8] #middle row
+  movdqu xmm0, xmmword ptr[rdi + r8 - 1] #middle row
 
 
   add r8, rcx
   shr rcx, 1
 
-  movdqu xmm1, xmmword ptr[rdi + r8] #top row
+  movdqu xmm1, xmmword ptr[rdi + r8 -1] #top row
 
 
   inc rdi               #revert to normal adressing
@@ -181,10 +182,21 @@ blur_simd:
 
   paddw xmm0, xmm1  #Vertical adding of matrix (middle + (top+bottom))
 
-  phaddw xmm0, xmm0 #words
-  phaddd xmm0, xmm0 #64 bit answer in array
 
-  movq rax, xmm0
+
+  movq r12, xmm0
+
+	xor rax, rax
+
+	add ax, r12w
+
+	shr r12, 16
+
+	add ax, r12w
+
+	shr r12, 16
+
+	add ax, r12w
 
   cmp rbx, 16
   je .LDevide_Normal
@@ -225,6 +237,7 @@ blur_simd:
 
 
 .Lend:
+pop r12
 pop rbx
 ret
 
