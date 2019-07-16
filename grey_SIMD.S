@@ -55,7 +55,7 @@ greyscale_simd:
 
 	#Red
 	movdqu xmm0,  xmmword ptr[rdi + r10]
-	pmullw xmm1, xmm5
+	pmullw xmm0, xmm5
 
 
 	#Green
@@ -87,7 +87,7 @@ greyscale_simd:
 	sub r10, rsi
 	movdqu xmmword ptr[rdi + r10], xmm0
 
-	#green
+	#red
 	sub r10, rsi
 	movdqu xmmword ptr[rdi + r10], xmm0
 
