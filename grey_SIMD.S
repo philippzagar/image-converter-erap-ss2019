@@ -37,7 +37,7 @@ greyscale_simd:
 	#r10 = loop counter
 	#rsi = amount of pixels
 
-	movdqu xmm3, xmmword ptr[redWeight]	#blue weighting
+	movdqu xmm3, xmmword ptr[blueWeight]	#blue weighting
 	movdqu xmm4, xmmword ptr[greenWeight] 	#green weighting
 	movdqu xmm5, xmmword ptr[redWeight]	#red weighting
 	movdqu xmm6, xmmword ptr[sumWeight]	#sum weighting
@@ -53,9 +53,9 @@ greyscale_simd:
 
 #Reading + Calculation:
 
-	#Blue
+	#Red
 	movdqu xmm0,  xmmword ptr[rdi + r10]
-	pmullw xmm1, xmm3
+	pmullw xmm1, xmm5
 
 
 	#Green
@@ -65,10 +65,10 @@ greyscale_simd:
 	paddw xmm0, xmm1
 
 
-	#Red
+	#Blue
 	add r10, rsi
 	movdqu xmm1,  xmmword ptr[rdi + r10]
-	pmullw xmm1, xmm5
+	pmullw xmm1, xmm3
 	paddw xmm0, xmm1
 
 
@@ -80,14 +80,14 @@ greyscale_simd:
 #writing:
 
 
-	#red
+	#blue
 	movdqu xmmword ptr[rdi + r10], xmm0
 
 	#green
 	sub r10, rsi
 	movdqu xmmword ptr[rdi + r10], xmm0
 
-	#blue
+	#green
 	sub r10, rsi
 	movdqu xmmword ptr[rdi + r10], xmm0
 
@@ -124,7 +124,7 @@ greyscale_simd:
 
  	mov al, [rdi + r10] 	#Blue channel
 
-	imul eax, 2
+	imul eax, 5
 	add r8d, eax
 
  	add r10, rsi  		#Next Color channelblock
@@ -144,7 +144,7 @@ greyscale_simd:
 	xor eax, eax
 
  	mov al, [rdi + r10 ]	#Red channel
-	
+
 	imul eax, 2
 	add r8d, eax
 
