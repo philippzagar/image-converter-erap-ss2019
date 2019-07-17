@@ -13,13 +13,15 @@
 /***** Assembly Functions ******/
 // Greyscale
 extern void greyscale(RGB *rgbValuesOut, int width, int height);
-extern void greyscale_simd(RGB* out, int width, int height);
+// Greyscale SIMD
+extern void greyscale_simd(RGBcolorWord* out, int width, int height);
 
 // Blur
 extern void blur(RGB* in, RGB* out, int width, int height);
+// Blur colour - for test blur first, then grey
 extern void blur_colour(RGB* in, RGB* out, int width, int height);
-
-extern void blur_simd (RGB* in, RGB* out, int width, int height);
+// Blur SIMD
+extern void blur_simd(RGBcolorWord* in, RGBcolorWord* out, int width, int height);
 
 /***** C Functions ******/
 // BMP Functions
@@ -39,6 +41,8 @@ RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues);
 RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues);
 // Additional Functions
 bool endsWith(char *str, char *suffix);
+// Time Measurement function
+//void timeMeasurements(RGB* rgbValues);
 
 // C implemented Greyscale and Convolution
 RGB* convertRGBtoGreyscale(RGB* rgbValues);
@@ -61,10 +65,6 @@ int main(int argc, char** argv) {
     RGB* rgbValues;
     // File path
     char relativePath[100];
-    // Time measurements
-    double start, end, time = 0;
-    struct timespec t;
-    double factor = 1e-9;
 
     /*
     // Read File Name from User
@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    /******** Read picture ***********/
     // JPG File
     if(isJPG) {
         /*
@@ -146,125 +147,50 @@ int main(int argc, char** argv) {
         fclose(inFile);
     }
 
-    // Assembly Functions
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // Function for time measurements - every measurement in there
+    // timeMeasurements(rgbValues);
 
-    /*
+
+    /******** Conversion of picture ***********/
+    // Helper variables for picture conversion
+    RGB* rgbFinalValues;
     RGBcolorWord* rgbSIMD;
+    // Allocate new SIMD Array for blur function (else the results would be not entirly accurate)
     RGBcolorWord* rgbnewSIMD = (RGBcolorWord*) malloc(3 * global_image_width * global_image_height * sizeof(RGBcolorWord));
     if(!rgbnewSIMD) {
         printf("Error allocation new memory!\n");
         return -1;
     }
-    RGB* rgb;
-    */
-    RGB* rgbNewValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
-    if(!rgbValues) {
-        printf("Error allocation new memory!\n");
+
+    // Conversion from RGB array to Word array (rrr/ggg/bbb), that can be used for SIMD
+    rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+    if(!rgbSIMD) {
+        printf("Error converting RGB array to SIMD word array!\n");
         return -1;
     }
 
-    // Time measurement start
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    start = t.tv_sec + t.tv_nsec * factor;
+    // Greyscale SIMD Assembly Function
+    greyscale_simd(rgbSIMD, global_image_width, global_image_height);
+    // Blur SIMD Assembly Function
+    blur_simd(rgbSIMD, rgbnewSIMD, global_image_width, global_image_height);
 
-    for(int ins = 0; ins < 100; ins++) {
-
-        // SIMD
-        /*
-        rgbSIMD = convertRGBtoSIMDWord(rgbValues);
-
-        if(!rgbSIMD) {
-            printf("Error converting RGB array to SIMD word array!\n");
-            return -1;
-        }
-
-        greyscale_simd(rgbSIMD, global_image_width, global_image_height);
-        blur_simd(rgbSIMD, rgbnewSIMD, global_image_width, global_image_height);
-        //printf("%d\n", ins);
-        rgb = convertSIMDWordtoRGB(rgbnewSIMD);
-
-        if(!rgb) {
-            printf("Error converting SIMD word array to RGB array!\n");
-            return -1;
-        }
-        */
-
-        // ASM
-        //printf("%d\n", ins);
-
-        greyscale(rgbValues, global_image_width, global_image_height);
-        blur(rgbValues, rgbNewValues, global_image_width, global_image_height);
-
+    // Conversion from Word array for SIMD to RGB array
+    rgbFinalValues = convertSIMDWordtoRGB(rgbnewSIMD);
+    if(!rgbFinalValues) {
+        printf("Error converting SIMD word array to RGB array!\n");
+        return -1;
     }
 
-    // End time measurements
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    end = t.tv_sec + t.tv_nsec * factor;
-    time = end - start;
-
-    printf("%lf\n", time);
-
+    // Free allocated memory
     free(rgbValues);
-    //free(rgbSIMD);
-    //free(rgbnewSIMD);
+    free(rgbSIMD);
+    free(rgbnewSIMD);
 
-    //rgbValues = rgb;
-    rgbValues = rgbNewValues;
-
-    // Convert to greyscale********************************************************************************************************************
-    //greyscale(rgbValues, info->width, info->height);
+    // Set final values to input values (that is now written back to memory)
+    rgbValues = rgbFinalValues;
 
 
-    // For Blur *******************************************************************************************************************************
-    // Allocate new memory space for blur, because else the algorithm doesnt work proprly
-    //RGB* out = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
-    //blur(rgbValues, out, global_image_width, global_image_height);
-
-    // Free old rgbValues
-
-
-
-    // For Flo***with rrrgggbbb*************************************************************************************************************************************
-    // RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
-    // blur_colour (rgbSIMD, rgbSIMD, info->width, info->height);
-    //
-    // RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
-    // free(rgbValues);
-    //
-    // rgbValues = rgb;
-
-
-    // RGB* out = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
-    //
-    //
-    // blur_colour (rgbValues, out, info->width, info->height);
-    //
-    //
-    //
-    // free(rgbValues);
-    //
-    // rgbValues = out;
-
-
-
-
-
-    // Set the new values to the old pointer
-
-
-    //RGB* out = (RGB*) malloc(info->width * info->height * sizeof(RGB));
-    //blur(rgbValues, out, info->width, info->height);
-
-    //free(rgbValues);
-
-    //rgbValues = out;
-
-    //rgbValues = convolutionRGB(rgbValues, info);
-
-
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+    /******** Write picture ***********/
     // JPG File
     if(isJPG) {
         /*
@@ -405,7 +331,7 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
     }
 
     // If picture is really large
-    if(info->width > 10000 || info->height > 10000) {
+    if(info->width > 20000 || info->height > 20000) {
         printf("Error - Picture is too large!\n");
         return false;
     }
@@ -679,52 +605,6 @@ RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues) {
     return rgbNewValues;
 }
 
-// Converts the RGB values to a different data model in memory, because SIMD in assembly needs it
-// Color is of type byte
-// Memory model rrrrr/ggggg/bbbbbb
-RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues) {
-    long countPixels = global_image_width * global_image_height;
-
-    // Allocate new array for all RGB values
-    RGBcolorByte* rgbNewValues = (RGBcolorByte*) malloc(3 * (countPixels * sizeof(unsigned char)));
-
-    if(!rgbNewValues) {
-        printf("Error allocation new memory!\n");
-        return NULL;
-    }
-
-    // Write Pixels to the new array, where a color is a byte
-    for(long i = 0; i < countPixels; i++) {
-        rgbNewValues[i].color = rgbValues[i].red;
-        rgbNewValues[i + countPixels].color = rgbValues[i].green;
-        rgbNewValues[i + 2*countPixels].color = rgbValues[i].blue;
-    }
-
-    return rgbNewValues;
-}
-
-// Converts the SIMD Byte values to normal RGB values
-RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues) {
-    long countPixels = global_image_width * global_image_height;
-
-    // Allocate new array for all RGB values
-    RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
-
-    if(!rgbNewValues) {
-        printf("Error allocation new memory!\n");
-        return NULL;
-    }
-
-    // Convert the byte values back to the normal RGB format, where a color is a char
-    for(long i = 0; i < countPixels; i++) {
-        rgbNewValues[i].red = rgbValues[i].color;
-        rgbNewValues[i].green = rgbValues[i + countPixels].color;
-        rgbNewValues[i].blue = rgbValues[i + 2*countPixels].color;
-    }
-
-    return rgbNewValues;
-}
-
 // Check if string ends with a certain suffix
 bool endsWith(char *str, char *suffix)
 {
@@ -742,7 +622,127 @@ bool endsWith(char *str, char *suffix)
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
+// Function for time measurements - please only test the different variants seperatly because rgbValues is freed after each version
+/*
+void timeMeasurements(RGB* rgbValues) {
+    // Time measurements
+    double start, end, time = 0;
+    struct timespec t;
+    double factor = 1e-9;
+
+    /********************************************************************************************/
+    // SIMD time measurements
+    /*
+    RGB* rgbFinalValues;
+    RGBcolorWord* rgbSIMD;
+    RGBcolorWord* rgbnewSIMD = (RGBcolorWord*) malloc(3 * global_image_width * global_image_height * sizeof(RGBcolorWord));
+    if(!rgbnewSIMD) {
+        printf("Error allocation new memory!\n");
+        return -1;
+    }
+
+    // Time measurement start
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    start = t.tv_sec + t.tv_nsec * factor;
+
+    for(int i = 0; i < 100; i++) {
+        rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+        if(!rgbSIMD) {
+            printf("Error converting RGB array to SIMD word array!\n");
+            return -1;
+        }
+
+        greyscale_simd(rgbSIMD, global_image_width, global_image_height);
+        blur_simd(rgbSIMD, rgbnewSIMD, global_image_width, global_image_height);
+
+        rgbFinalValues = convertSIMDWordtoRGB(rgbnewSIMD);
+        if(!rgbFinalValues) {
+            printf("Error converting SIMD word array to RGB array!\n");
+            return -1;
+        }
+
+        free(rgbSIMD);
+        free(rgbFinalValues);
+    }
+
+    // End time measurements
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    end = t.tv_sec + t.tv_nsec * factor;
+    time = end - start;
+
+    printf("%lf\n", time);
+
+    free(rgbValues);
+    free(rgbnewSIMD);
+    */
+    /********************************************************************************************/
+
+
+    /********************************************************************************************/
+    // Normal ASM time measurements (first greyscale, then blur)
+    /*
+    RGB* rgbNewValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
+    if(!rgbValues) {
+        printf("Error allocation new memory!\n");
+        return -1;
+    }
+
+    // Time measurement start
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    start = t.tv_sec + t.tv_nsec * factor;
+
+    for(int i = 0; i < 100; i++) {
+        greyscale(rgbValues, global_image_width, global_image_height);
+        blur(rgbValues, rgbNewValues, global_image_width, global_image_height);
+    }
+
+    // End time measurements
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    end = t.tv_sec + t.tv_nsec * factor;
+    time = end - start;
+
+    printf("%lf\n", time);
+
+    free(rgbValues);
+    free(rgbNewValues);
+    */
+    /********************************************************************************************/
+
+
+    /********************************************************************************************/
+    // ASM time measurements (first blur, then greyscale)
+    /*
+    RGB* rgbNewValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
+    if(!rgbValues) {
+        printf("Error allocation new memory!\n");
+        return -1;
+    }
+
+    // Time measurement start
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    start = t.tv_sec + t.tv_nsec * factor;
+
+    for(int i = 0; i < 100; i++) {
+        blur_colour(rgbValues, rgbNewValues, global_image_width, global_image_height);
+        greyscale(rgbNewValues, global_image_width, global_image_height);
+    }
+
+    // End time measurements
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    end = t.tv_sec + t.tv_nsec * factor;
+    time = end - start;
+
+    printf("%lf\n", time);
+
+    free(rgbValues);
+    free(rgbNewValues);
+    */
+    /********************************************************************************************/
+    /*
+}*/
+
 // JPEG stuff
 // #include "./JPG_stuff.c"
 
 // -ljpeg
+// -w
