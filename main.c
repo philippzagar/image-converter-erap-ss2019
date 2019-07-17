@@ -80,6 +80,7 @@ int main(int argc, char** argv) {
 
     // Just for testing
     strcpy(relativePath, "./test_gross.bmp");
+    //strcpy(relativePath, "./test_gross.bmp");
 
     // Check File format
     bool isJPG = endsWith(relativePath, ".jpg") || endsWith(relativePath, ".JPG");
@@ -147,7 +148,6 @@ int main(int argc, char** argv) {
 
     // Assembly Functions
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    // Convert to SIMD data model in memory
 
     // Time measurement start
     clock_gettime(CLOCK_MONOTONIC, &t);
@@ -155,15 +155,23 @@ int main(int argc, char** argv) {
 
     RGBcolorWord* rgbSIMD;
     RGB* rgb;
+    RGB* rgbNewValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
 
-    for(int i = 0; i < 100; i++) {
+    for(int ins = 0; ins < 10; ins++) {
+
+        // SIMD
+        /*
         rgbSIMD = convertRGBtoSIMDWord(rgbValues);
-
-        greyscale_simd(rgbSIMD, info->width, info->height);
-
-        //blur_simd(rgbSIMD, rgbSIMD, info->width, info->height);
-        //printf("he\n");
+        greyscale_simd(rgbSIMD, global_image_width, global_image_height);
+        blur_simd(rgbSIMD, rgbSIMD, global_image_width, global_image_height);
+        printf("he\n");
         rgb = convertSIMDWordtoRGB(rgbSIMD);
+         */
+        printf("%d\n", ins);
+        greyscale(rgbValues, global_image_width, global_image_height);
+        printf("test\n");
+        blur(rgbValues, rgbNewValues, global_image_width, global_image_height);
+
     }
 
     // End time measurements
@@ -175,8 +183,8 @@ int main(int argc, char** argv) {
 
     free(rgbValues);
 
-    rgbValues = rgb;
-
+    //rgbValues = rgb;
+    rgbValues = rgbNewValues;
 
 
     // Convert to greyscale********************************************************************************************************************
@@ -359,6 +367,12 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
     // Check if Bits per pixel is 24
     if(info->bitDepth != 24) {
         printf("Error - Bits per pixel is not 24!\n");
+        return false;
+    }
+
+    // If picture is really large
+    if(info->width > 10000 || info->height > 10000) {
+        printf("Error - Picture is too large!\n");
         return false;
     }
 
