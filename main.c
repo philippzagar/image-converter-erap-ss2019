@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     */
 
     // Just for testing
-    strcpy(relativePath, "./test_gross.bmp");
+    strcpy(relativePath, "./lena.bmp");
     //strcpy(relativePath, "./test_gross.bmp");
 
     // Check File format
