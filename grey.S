@@ -19,6 +19,8 @@
 
 greyscale:
 
+
+
 	#r10 = counter for loop
 	#rsi = amountOfChannels
 	#r8 = calculating average
@@ -41,29 +43,29 @@ greyscale:
 	xor rax, rax		#For copying from Memory
 	xor r8, r8		#For storing average
 
-	mov rbx, 11		#weighting factor
-		
+
+
 	mov al, [rdi + r10] 	#Blue channel
-	mul bl
 	lea r8d, [eax * 1]	#Add to avg with weighting
-	
-	mov rbx, 59		#weighting factors
+
+
 
 	mov al, [rdi+ r10 + 1] 	#Green channel
-	mul bl
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
-	
-	mov rbx, 30		#weighting factors
+
+
 
 	mov al, [rdi+ r10 + 2]	#Red channel
-	mul bl
+
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
 
 	mov eax, r8d
 
 	xor rdx, rdx 		#for devision
-	mov rbx, 100
-	div rbx
+
+	mov r8, 3
+
+	div r8
 
 	mov [rdi + r10], al  	#Blue channel
 	mov [rdi+ r10 + 1], al	#Green channel
@@ -74,4 +76,5 @@ greyscale:
 	jmp .Lloop
 
 .Lend:
+
 	ret
