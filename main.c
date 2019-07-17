@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
     clock_gettime(CLOCK_MONOTONIC, &t);
     start = t.tv_sec + t.tv_nsec * factor;
 
-    for(int ins = 0; ins < 1000; ins++) {
+    for(int ins = 0; ins < 100; ins++) {
 
         // SIMD
         /*
@@ -187,7 +187,8 @@ int main(int argc, char** argv) {
     printf("%lf\n", time);
 
     free(rgbValues);
-    //free(rgbNewValues);
+    //free(rgbSIMD);
+    //free(rgbnewSIMD);
 
     //rgbValues = rgb;
     rgbValues = rgbNewValues;
@@ -342,7 +343,7 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
     // Check if the header size is correct, we assume the header is a 40 byte info header
     if(info->headerSize != 40) {
         //printf("Error - Header size not correct!\n");
-        printf("Header size is %d\n", info->headerSize);
+        printf("Header size is %d byte\n", info->headerSize);
     }
 
     // Check if the size of the header is correct -> header (14 byte) + info size is the offset, where the pixel data begins
@@ -395,7 +396,7 @@ RGB* readBMPImage(FILE* inFile, BMPImageInfo* info) {
 
     // Moving offset of the info header because the size can vary
     if(info->headerSize != 40) {
-        printf("Moving header %d\n", info->headerSize - 40);
+        printf("Moving header %d byte\n", info->headerSize - 40);
 
         if(fseek(inFile, info->headerSize - 40, SEEK_CUR) != 0) {
             printf("Error - Moving offset of header!\n");
@@ -458,7 +459,7 @@ bool writeBMPImage(FILE* outFile, BMPHeader* header, BMPImageInfo* info, RGB* rg
 
     // Moving offset of the info header because the size can vary
     if(info->headerSize != 40) {
-        printf("Moving header %d\n", info->headerSize - 40);
+        printf("Moving header %d byte\n", info->headerSize - 40);
 
         if(fseek(outFile, info->headerSize - 40, SEEK_CUR) != 0) {
             printf("Error - Moving offset of header!\n");
