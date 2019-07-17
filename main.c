@@ -152,9 +152,17 @@ int main(int argc, char** argv) {
     /*
     RGBcolorWord* rgbSIMD;
     RGBcolorWord* rgbnewSIMD = (RGBcolorWord*) malloc(3 * global_image_width * global_image_height * sizeof(RGBcolorWord));
+    if(!rgbnewSIMD) {
+        printf("Error allocation new memory!\n");
+        return -1;
+    }
     RGB* rgb;
     */
     RGB* rgbNewValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
+    if(!rgbValues) {
+        printf("Error allocation new memory!\n");
+        return -1;
+    }
 
     // Time measurement start
     clock_gettime(CLOCK_MONOTONIC, &t);
@@ -165,10 +173,21 @@ int main(int argc, char** argv) {
         // SIMD
         /*
         rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+
+        if(!rgbSIMD) {
+            printf("Error converting RGB array to SIMD word array!\n");
+            return -1;
+        }
+
         greyscale_simd(rgbSIMD, global_image_width, global_image_height);
         blur_simd(rgbSIMD, rgbnewSIMD, global_image_width, global_image_height);
         //printf("%d\n", ins);
         rgb = convertSIMDWordtoRGB(rgbnewSIMD);
+
+        if(!rgb) {
+            printf("Error converting SIMD word array to RGB array!\n");
+            return -1;
+        }
         */
 
         // ASM
@@ -309,6 +328,11 @@ int main(int argc, char** argv) {
 BMPHeader* readHeader(FILE* inFile) {
     BMPHeader* header = (BMPHeader*) malloc(sizeof(BMPHeader));
 
+    if(!header) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
+
     // Read Header data one by one because of alignment
     if( fread(&header->signature[0], sizeof(char), 1, inFile) != 1  ||
         fread(&header->signature[1], sizeof(char), 1, inFile) != 1  ||
@@ -326,6 +350,11 @@ BMPHeader* readHeader(FILE* inFile) {
 BMPImageInfo* readInfo(FILE* inFile) {
     BMPImageInfo* info = (BMPImageInfo*) malloc(sizeof(BMPImageInfo));
 
+    if(!info) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
+
     if( fread(info, sizeof(BMPImageInfo), 1, inFile) != 1 ) {
         return NULL;
     }
@@ -342,7 +371,6 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
 
     // Check if the header size is correct, we assume the header is a 40 byte info header
     if(info->headerSize != 40) {
-        //printf("Error - Header size not correct!\n");
         printf("Header size is %d byte\n", info->headerSize);
     }
 
@@ -393,6 +421,11 @@ bool checkBMPImage(BMPHeader* header, BMPImageInfo* info) {
 RGB* readBMPImage(FILE* inFile, BMPImageInfo* info) {
     // Allocate memory space for RGB array of pixels
     RGB *rgbValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
+
+    if(!rgbValues) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
 
     // Moving offset of the info header because the size can vary
     if(info->headerSize != 40) {
@@ -541,6 +574,11 @@ RGB* convolutionRGB(RGB* rgbValues) {
     // Allocate new RGB array -> Values of old array are not overwritten (because of needing those pixels for convolution)
     RGB* convolutionRGBValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
 
+    if(!convolutionRGBValues) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
+
     // Variables
     int sumRed = 0;
     int sumGreen = 0;
@@ -604,6 +642,11 @@ RGBcolorWord* convertRGBtoSIMDWord(RGB* rgbValues) {
     // Allocate new array for all RGB values (color is a word)
     RGBcolorWord* rgbNewValues = (RGBcolorWord*) malloc(3 * (countPixels * 2 * sizeof(unsigned char)));
 
+    if(!rgbNewValues) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
+
     // Write Pixels to the new array, where a color is a word
     for(long i = 0; i < countPixels; i++) {
         rgbNewValues[i].color = rgbValues[i].red;
@@ -620,6 +663,11 @@ RGB* convertSIMDWordtoRGB(RGBcolorWord* rgbValues) {
 
     // Allocate new array for all RGB values
     RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
+
+    if(!rgbNewValues) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
 
     // Convert the Word values back to the normal RGB format, where a color is a char
     for(long i = 0; i < countPixels; i++) {
@@ -640,6 +688,11 @@ RGBcolorByte* convertRGBtoSIMDByte(RGB* rgbValues) {
     // Allocate new array for all RGB values
     RGBcolorByte* rgbNewValues = (RGBcolorByte*) malloc(3 * (countPixels * sizeof(unsigned char)));
 
+    if(!rgbNewValues) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
+
     // Write Pixels to the new array, where a color is a byte
     for(long i = 0; i < countPixels; i++) {
         rgbNewValues[i].color = rgbValues[i].red;
@@ -656,6 +709,11 @@ RGB* convertSIMDBytetoRGB(RGBcolorByte* rgbValues) {
 
     // Allocate new array for all RGB values
     RGB* rgbNewValues = (RGB*) malloc(countPixels * sizeof(RGB));
+
+    if(!rgbNewValues) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
 
     // Convert the byte values back to the normal RGB format, where a color is a char
     for(long i = 0; i < countPixels; i++) {
