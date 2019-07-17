@@ -13,7 +13,7 @@
 /***** Assembly Functions ******/
 // Greyscale
 extern void greyscale(RGB *rgbValuesOut, int width, int height);
-extern void greyscale_simd(RGB* out, int width, int height); // Runs with greyscale for now
+extern void greyscale_simd(RGB* out, int width, int height);
 
 // Blur
 extern void blur(RGB* in, RGB* out, int width, int height);
@@ -79,8 +79,8 @@ int main(int argc, char** argv) {
     */
 
     // Just for testing
-    strcpy(relativePath, "./lena.bmp");
-    //strcpy(relativePath, "./test_gross.bmp");
+    //strcpy(relativePath, "./lena.bmp");
+    strcpy(relativePath, "./test_gross.bmp");
 
     // Check File format
     bool isJPG = endsWith(relativePath, ".jpg") || endsWith(relativePath, ".JPG");
@@ -153,23 +153,28 @@ int main(int argc, char** argv) {
     clock_gettime(CLOCK_MONOTONIC, &t);
     start = t.tv_sec + t.tv_nsec * factor;
 
+    /*
     RGBcolorWord* rgbSIMD;
+    RGBcolorWord* rgbnewSIMD = (RGBcolorWord*) malloc(3 * global_image_width * global_image_height * sizeof(RGBcolorWord));
     RGB* rgb;
+    */
     RGB* rgbNewValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
 
-    for(int ins = 0; ins < 10; ins++) {
+    for(int ins = 0; ins < 1; ins++) {
 
         // SIMD
         /*
         rgbSIMD = convertRGBtoSIMDWord(rgbValues);
         greyscale_simd(rgbSIMD, global_image_width, global_image_height);
-        blur_simd(rgbSIMD, rgbSIMD, global_image_width, global_image_height);
-        printf("he\n");
-        rgb = convertSIMDWordtoRGB(rgbSIMD);
-         */
+        blur_simd(rgbSIMD, rgbnewSIMD, global_image_width, global_image_height);
+        //printf("%d\n", ins);
+        rgb = convertSIMDWordtoRGB(rgbnewSIMD);
+        */
+
+        // ASM
         printf("%d\n", ins);
+
         greyscale(rgbValues, global_image_width, global_image_height);
-        printf("test\n");
         blur(rgbValues, rgbNewValues, global_image_width, global_image_height);
 
     }
@@ -181,11 +186,10 @@ int main(int argc, char** argv) {
 
     printf("%lf\n", time);
 
-    free(rgbValues);
+    //free(rgbValues);
 
     //rgbValues = rgb;
     rgbValues = rgbNewValues;
-
 
     // Convert to greyscale********************************************************************************************************************
     //greyscale(rgbValues, info->width, info->height);
