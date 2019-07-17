@@ -100,16 +100,16 @@ blur_simd:
 
   .LisNegative:
 
-  shl rcx, 1            #word next row
-  add r8, rcx
+  shl rdx, 1            #word next row
+  add r8, rdx
 
   movdqu xmm0, xmmword ptr[rdi + r8 - 1] #middle row
 
 
-  add r8, rcx
-  shr rcx, 1
+  add r8, rdx
+  shr rdx, 1
 
-  movdqu xmm1, xmmword ptr[rdi + r8 -1] #top row
+  movdqu xmm1, xmmword ptr[rdi + r8 - 1] #top row
 
 
   inc rdi               #revert to normal adressing
