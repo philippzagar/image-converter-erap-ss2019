@@ -79,15 +79,11 @@ int main(int argc, char** argv) {
     */
 
     // Just for testing
-    strcpy(relativePath, "./lena.bmp");
+    strcpy(relativePath, "./test_gross.bmp");
 
     // Check File format
     bool isJPG = endsWith(relativePath, ".jpg") || endsWith(relativePath, ".JPG");
     bool isBMP = endsWith(relativePath, ".bmp") || endsWith(relativePath, ".BMP");
-
-    // Time measurement start
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    start = t.tv_sec + t.tv_nsec * factor;
 
     // Open the file with given file name
     inFile = fopen(relativePath, "rb");
@@ -153,14 +149,29 @@ int main(int argc, char** argv) {
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Convert to SIMD data model in memory
 
-    RGBcolorWord* rgbSIMD = convertRGBtoSIMDWord(rgbValues);
+    // Time measurement start
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    start = t.tv_sec + t.tv_nsec * factor;
 
-    greyscale_simd(rgbSIMD, info->width, info->height);
+    RGBcolorWord* rgbSIMD;
+    RGB* rgb;
 
-    blur_simd(rgbSIMD, rgbSIMD, info->width, info->height);
+    for(int i = 0; i < 100; i++) {
+        rgbSIMD = convertRGBtoSIMDWord(rgbValues);
 
+        greyscale_simd(rgbSIMD, info->width, info->height);
 
-    RGB* rgb = convertSIMDWordtoRGB(rgbSIMD);
+        //blur_simd(rgbSIMD, rgbSIMD, info->width, info->height);
+        //printf("he\n");
+        rgb = convertSIMDWordtoRGB(rgbSIMD);
+    }
+
+    // End time measurements
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    end = t.tv_sec + t.tv_nsec * factor;
+    time = end - start;
+
+    printf("%lf\n", time);
 
     free(rgbValues);
 
@@ -276,11 +287,6 @@ int main(int argc, char** argv) {
     if(rgbValues != NULL) {
         free(rgbValues);
     }
-
-    // End time measurements
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    end = t.tv_sec + t.tv_nsec * factor;
-    time = end - start;
 
     return 0;
 }
