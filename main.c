@@ -149,10 +149,6 @@ int main(int argc, char** argv) {
     // Assembly Functions
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    // Time measurement start
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    start = t.tv_sec + t.tv_nsec * factor;
-
     /*
     RGBcolorWord* rgbSIMD;
     RGBcolorWord* rgbnewSIMD = (RGBcolorWord*) malloc(3 * global_image_width * global_image_height * sizeof(RGBcolorWord));
@@ -160,7 +156,11 @@ int main(int argc, char** argv) {
     */
     RGB* rgbNewValues = (RGB*) malloc(global_image_width * global_image_height * sizeof(RGB));
 
-    for(int ins = 0; ins < 1; ins++) {
+    // Time measurement start
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    start = t.tv_sec + t.tv_nsec * factor;
+
+    for(int ins = 0; ins < 1000; ins++) {
 
         // SIMD
         /*
@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
         */
 
         // ASM
-        printf("%d\n", ins);
+        //printf("%d\n", ins);
 
         greyscale(rgbValues, global_image_width, global_image_height);
         blur(rgbValues, rgbNewValues, global_image_width, global_image_height);
@@ -186,7 +186,8 @@ int main(int argc, char** argv) {
 
     printf("%lf\n", time);
 
-    //free(rgbValues);
+    free(rgbValues);
+    //free(rgbNewValues);
 
     //rgbValues = rgb;
     rgbValues = rgbNewValues;
