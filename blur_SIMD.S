@@ -8,7 +8,7 @@ TopBottom:  .word 0x0001,0x0002,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000
 middle:     .word 0x0002,0x0004,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000
 
 TopBottom_Kill_left: .word 0x0001,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
-mkl: .word 0x0002,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
+middle_kill_left: .word 0x0002,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 TopBottom_Kill_right: .word 0x0000,0x0002,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000
 middle_kill_right: .word 0x0000,0x0004,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000
@@ -18,7 +18,21 @@ TopBottom_Kill_both: .word 0x0000,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000,0x00
 middle_kill_both: .word 0x0000,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 .text
-  # void blur(RGB* in, RGB* out, int width, int height)
+  #void greyscale_simd(RGBcolorWord* out, int width, int height)
+
+	#-------------------Bei der Übergabe--------------------#
+	#														#
+	#	  rdi = Adress pixel Array (Read and write)			#
+	# 	rsi = Adress for writing new values									#
+	#	  rdx = width
+	#		rcx = height										#
+	#														#
+	#	--> Keine Rückgabe erwartet							#
+	#-------------------------------------------------------#
+
+
+
+
 
 	#rdi = Adress for greyscale data
  	#rsi = Adress for writing data back
@@ -53,7 +67,7 @@ blur_simd:
   movdqu xmm7,  xmmword ptr[middle]         #Gauss matrix normal middle
   movdqu xmm6,  xmmword ptr[TopBottom]      #Gauss matrix normal top/bottom
 
-  movdqu xmm5, xmmword ptr[mkl]
+  movdqu xmm5, xmmword ptr[middle_kill_left]
   movdqu xmm4, xmmword ptr[TopBottom_Kill_left]
 
 
@@ -80,11 +94,13 @@ blur_simd:
 
 
 
-  #Load values (only one channel because greyscale)*****************************
+#*******************Load values (only one channel because greyscale)************
+
   dec rdi #because we have to fit in pixel to the left
+	dec rdi #and twiche because the channel is a word
 
 
-  #Calculating pixel we are on
+  #Calculating wich row to copy from memory
   mov r8, r10
   dec r8                #for lower row
   imul r8, rdx
@@ -96,28 +112,30 @@ blur_simd:
   jl .LisNegative
 
 
-  movdqu xmm2, xmmword ptr[rdi + r8 - 1] #bottom row
+  movdqu xmm2, xmmword ptr[rdi + r8] #bottom row
 
   .LisNegative:
 
-  shl rdx, 1            #word next row
+  shl rdx, 1            #go to next row
   add r8, rdx
 
-  movdqu xmm0, xmmword ptr[rdi + r8 - 1] #middle row
+  movdqu xmm0, xmmword ptr[rdi + r8] #middle row
 
 
-  add r8, rdx
+  add r8, rdx					 #go to next row
   shr rdx, 1
 
-  movdqu xmm1, xmmword ptr[rdi + r8 - 1] #top row
+  movdqu xmm1, xmmword ptr[rdi + r8] #top row
 
 
   inc rdi               #revert to normal adressing
+	inc rdi               #revert to normal adressing
 
 
-  #Cleaning up values **********************************************************
+#*************************Checking existence of pixels**************************
+
   #Check if middle left exists
-  mov rbx, 16           #for calculating how much to devide
+  mov rbx, 16           #for calculating how many pixels are there for dividing
 
 
 
@@ -175,6 +193,7 @@ blur_simd:
 
   pmullw xmm0, xmm2
   pmullw xmm1, xmm3
+
 
 
 #***********************Add up rows and cloumns*********************************
@@ -249,15 +268,11 @@ ret
 #For Calculating avg ***********************************************************
 .LDevide_Normal:
 
-
   shr rax, 4
-
-
   jmp .Lwriting_pixel
 
 
 .LDevide_Special:
-
 
   mov r8, rdx
   xor rdx, rdx
