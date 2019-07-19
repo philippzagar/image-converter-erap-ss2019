@@ -22,10 +22,10 @@ greyscale:
 	#r10 = counter for loop
 	#rsi = amountOfChannels
 	#r8 = calculating average
-	#height moved to rcx for devision
+	#height moved to rcx for division
 
 
-	mov rcx, rdx 		#moved height for devision
+	mov rcx, rdx 		#moved height for division
 
 	imul rsi, rcx 		#pixelAmount = height * width
 	imul rsi, 3 		#ChannelAmount = pixelAmount * 3
@@ -41,17 +41,17 @@ greyscale:
 	xor r8, r8		#For storing average
 
 	mov r11, 11		#weighting factor
-		
+
 	mov al, [rdi + r10] 	#Blue channel
 	mul r11b
 	lea r8d, [eax * 1]	#Add to avg with weighting
-	
+
 	mov r11, 59		#weighting factors
 
 	mov al, [rdi+ r10 + 1] 	#Green channel
 	mul r11b
 	lea r8d,[r8d + eax * 1]	#Add to avg with weighting
-	
+
 	mov r11, 30		#weighting factors
 
 	mov al, [rdi+ r10 + 2]	#Red channel
@@ -60,7 +60,7 @@ greyscale:
 
 	mov eax, r8d
 
-	xor rdx, rdx 		#for devision
+	xor rdx, rdx 		#for division
 	mov r11, 100
 	div r11
 

@@ -3,7 +3,7 @@
 
 .data  #Note have to be written in little endian
 
-#gaussMatrix that removes unwanted values
+#GaussMatrix that removes unwanted values
 TopBottom:  .word 0x0001,0x0002,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000
 middle:     .word 0x0002,0x0004,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000
 
@@ -18,7 +18,7 @@ TopBottom_Kill_both: .word 0x0000,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000,0x00
 middle_kill_both: .word 0x0000,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 .text
-  #void greyscale_simd(RGBcolorWord* out, int width, int height)
+  #void blur_simd(RGBcolorWord* in, RGBcolorWord* out, int width, int height)
 
 	#-------------------Bei der Übergabe--------------------#
 	#														#
@@ -38,7 +38,7 @@ middle_kill_both: .word 0x0000,0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
  	#rsi = Adress for writing data back
 	#rdx = width
 	#rcx = height
-  #rbx wich devision is used
+  #rbx wich division is used
   #r10 height counter
   #r11 width Counter
   #r8 for adressing
@@ -67,14 +67,14 @@ blur_simd:
   movdqu xmm7,  xmmword ptr[middle]         #Gauss matrix normal middle
   movdqu xmm6,  xmmword ptr[TopBottom]      #Gauss matrix normal top/bottom
 
-  movdqu xmm5, xmmword ptr[middle_kill_left]
-  movdqu xmm4, xmmword ptr[TopBottom_Kill_left]
+  movdqu xmm5, xmmword ptr[middle_kill_left]    #Gauss matrix that kills left
+  movdqu xmm4, xmmword ptr[TopBottom_Kill_left] #Gauss matrix that kills left
 
 
   #Calculating channel size
   mov r9, rcx
   imul r9, rdx
-  shl r9, 1
+  shl r9, 1             #(width * height * 2)
 
 
 
@@ -90,14 +90,14 @@ blur_simd:
 .Lloop_Width:
 
   cmp r11, rdx
-  jge .LCounter_Height_inc
+  jge .LCounter_Height_inc  #if(r11 >= Width)
 
 
 
 #*******************Load values (only one channel because greyscale)************
 
-  dec rdi #because we have to fit in pixel to the left
-	dec rdi #and twiche because the channel is a word
+  dec rdi #Because we have to fit in pixel to the left
+	dec rdi #and twice because the channel is a word
 
 
   #Calculating wich row to copy from memory
@@ -106,10 +106,10 @@ blur_simd:
   imul r8, rdx
   add r8, r11
 
-  imul r8, 2
+  shl r8, 1
 
   cmp r8, 0
-  jl .LisNegative
+  jl .LisNegative       #if adressing ist negative skip
 
 
   movdqu xmm2, xmmword ptr[rdi + r8] #bottom row
@@ -134,12 +134,11 @@ blur_simd:
 
 #*************************Checking existence of pixels**************************
 
-  #Check if middle left exists
+
   mov rbx, 16           #for calculating how many pixels are there for dividing
 
 
-
-  .Lcheck_top:
+.Lcheck_top:
   #check if top exists
 
   mov r8, r10
@@ -152,7 +151,7 @@ blur_simd:
   pxor xmm1, xmm1 #Set to 0 so that it does not influence
 
 
-  .Lcheck_Bottom:
+.Lcheck_Bottom:
   #check if bottom exists
 
   mov r8, r10
@@ -164,7 +163,7 @@ blur_simd:
   sub ebx, 4
   pxor xmm2, xmm2      #Set to 0 so that it does not influence
 
-  .Lcheck_middle_left:
+.Lcheck_middle_left:
   paddw xmm1, xmm2     #Both top and bottom can be in one register (distributiv)
 
   mov r8, r11          #move width Counter
@@ -175,7 +174,7 @@ blur_simd:
   jl .Lclean_left
 
 
-  .Lcheck_middle_right:
+.Lcheck_middle_right:
   #check if middle right exists
   mov r8, r11
   inc r8
@@ -184,8 +183,8 @@ blur_simd:
 
   jge .Lclean_right
 
-  movdqu xmm2, xmm7 #normal middle with cleaning
-  movdqu xmm3, xmm6 #normal top/bottom with cleaning
+  movdqu xmm2, xmm7 #normal middle GaussMatrix with cleaning
+  movdqu xmm3, xmm6 #normal top/bottom GaussMatrix with cleaning
 
 
 #************************Cleaning and weighting*********************************
@@ -202,6 +201,7 @@ blur_simd:
   paddw xmm0, xmm1  #Vertical adding of matrix (middle + (top+bottom))
 
 
+  #Moving to r12 to Calculate sum and for writing back to memory
 
   movq r12, xmm0
 
@@ -210,16 +210,15 @@ blur_simd:
 	add ax, r12w
 
 	shr r12, 16
-
 	add ax, r12w
 
 	shr r12, 16
-
 	add ax, r12w
 
+  #Check if division is shiftable
   cmp rbx, 16
-  je .LDevide_Normal
-  jl .LDevide_Special
+  je .LDivide_Normal
+  jl .LDivide_Special
 
 
 
@@ -230,7 +229,7 @@ blur_simd:
   mov r8, r10
   imul r8, rdx
   add r8, r11
-  imul r8, 2
+  shl r8, 1
 
   #Real wrting
   mov [rsi + r8], al      #Blue
@@ -266,13 +265,13 @@ ret
 
 
 #For Calculating avg ***********************************************************
-.LDevide_Normal:
+.LDivide_Normal:
 
   shr rax, 4
   jmp .Lwriting_pixel
 
 
-.LDevide_Special:
+.LDivide_Special:
 
   mov r8, rdx
   xor rdx, rdx
@@ -308,8 +307,8 @@ ret
 .Lclean_both:
 
 
-  movdqu xmm2, xmmword ptr[middle_kill_both]    #Have to load because not enough register
-  movdqu xmm3, xmmword ptr[TopBottom_Kill_both]
+  movdqu xmm2, xmmword ptr[middle_kill_both]    #Have to load because not enough
+  movdqu xmm3, xmmword ptr[TopBottom_Kill_both] #register
 
   cmp ebx, 12
 
@@ -347,7 +346,7 @@ ret
   jg .LnormalSub
   je .L1overlappingSub
 
-  .L2ocerlappingSub:
+  .L2overlappingSub:
 
     sub ebx, 2
     jmp .Lweighting #Dont want to change register values
