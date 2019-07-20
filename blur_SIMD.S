@@ -109,7 +109,7 @@ blur_simd:
   shl r8, 1
 
   cmp r8, 0
-  jl .LisNegative       #if adressing ist negative skip
+  jl .LisNegative       #if adressing is negative skip
 
 
   movdqu xmm2, xmmword ptr[rdi + r8] #bottom row
@@ -195,14 +195,13 @@ blur_simd:
 
 
 
-#***********************Add up rows and cloumns*********************************
+#***********************Add up rows and columns*********************************
 .Lcalculation:
 
   paddw xmm0, xmm1  #Vertical adding of matrix (middle + (top+bottom))
 
 
   #Moving to r12 to Calculate sum and for writing back to memory
-
   movq r12, xmm0
 
 	xor rax, rax
