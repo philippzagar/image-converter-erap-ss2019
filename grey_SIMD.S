@@ -5,7 +5,6 @@
 .data #Note have to be written in little endian
 
 
-
 redWeight: 			.word 0x0005,0x0005,0x0005,0x0005,0x0005,0x0005,0x0005,0x0005
 greenWeight: 		.word 0x0009,0x0009,0x0009,0x0009,0x0009,0x0009,0x0009,0x0009
 blueWeight: 		.word 0x0002,0x0002,0x0002,0x0002,0x0002,0x0002,0x0002,0x0002
@@ -21,9 +20,9 @@ sumWeight:   		.word 0x0004,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 #-------------------Bei der Übergabe--------------------#
 #														#
-#	  rdi = Adress pixel Array (Read and write)			#
-# 	rsi = width										#
-#	  rdx = height										#
+#	  	rdi = Adress pixel Array (Read and write)		#
+# 		rsi = width										#
+#	  	rdx = height									#
 #														#
 #	--> Keine Rückgabe erwartet							#
 #-------------------------------------------------------#
@@ -37,14 +36,14 @@ greyscale_simd:
 	#rsi = amount of pixels
 
 	movdqu xmm3, xmmword ptr[blueWeight]		#blue weighting
-	movdqu xmm4, xmmword ptr[greenWeight] 	#green weighting
+	movdqu xmm4, xmmword ptr[greenWeight] 		#green weighting
 	movdqu xmm5, xmmword ptr[redWeight]			#red weighting
 	movdqu xmm6, xmmword ptr[sumWeight]			#sum weighting
 
 	xor r10, r10				#counter = 0
-	imul rsi, rdx 			#pixelAmount = height * width
+	imul rsi, rdx 				#pixelAmount = height * width
 
-	shl rsi, 1       	#because pixels channels are a word
+	shl rsi, 1       			#because pixels channels are a word
 
 	jmp .Lload
 
@@ -71,7 +70,7 @@ greyscale_simd:
 	paddw xmm0, xmm1
 
 
-	PSRLW xmm0, xmm6		#Divide by 16 (shr 4)
+	PSRLW xmm0, xmm6	#Divide by 16 (shr 4)
 
 
 #*****************************Writing data**************************************
@@ -89,13 +88,13 @@ greyscale_simd:
 	movdqu xmmword ptr[rdi + r10], xmm0
 
 
-	add r10, 16 	# Amount of bytes we read (8 word color channels)
+	add r10, 16 		# Amount of bytes we read (8 word color channels)
 
 .Lload:
 
-	sub rsi, 16 	# Pixels that do not fit into xmm0
+	sub rsi, 16 		# Pixels that do not fit into xmm0
 
-	cmp r10, rsi 	#if(r10 >= rsi - 16)
+	cmp r10, rsi 		# if(r10 >= rsi - 16)
 
 	jge .LlastPixels
 
@@ -106,7 +105,7 @@ greyscale_simd:
 
 #*****************For pixels that do not fit into SIMD**************************
 
-.LlastPixels: 		#Pixels that do not fit into a simd (Could not work)
+.LlastPixels: 			#Pixels that do not fit into a simd
 
  	add rsi, 16  		#for greyscale loop to work
 
@@ -114,11 +113,11 @@ greyscale_simd:
 .Lloop_grey_single:
 
  	cmp r10, rsi
- 	jge .Lend		#if(r10 >= pixelAmount) --> end loop
+ 	jge .Lend			#if(r10 >= pixelAmount) --> end loop
 
 
  	xor rax, rax		#For copying from Memory
- 	xor r8, r8		#For storing average
+ 	xor r8, r8			#For storing average
 
 
 	#Red channel
@@ -131,7 +130,7 @@ greyscale_simd:
 	#Green channel
  	add r10, rsi  		#Next Color channelblock
 
-	xor eax, eax #maybe not needed
+	xor eax, eax
 
  	mov al, [rdi+ r10 ]
 	imul eax, 9
@@ -154,19 +153,19 @@ greyscale_simd:
 
 
  	mov eax, r8d
-	shr eax, 4					#Divide by the weight
+	shr eax, 4			#Divide by the weight
 
  	mov [rdi+ r10], al	#Blue channel
 
  	sub r10, rsi   		#Moving back a channelblock
- 	mov [rdi + r10], al  	#Green channel
+ 	mov [rdi + r10], al #Green channel
 
 
  	sub r10, rsi    	#Moving back a channelblock
  	mov [rdi + r10], al	#Red channel
 
 
- 	add r10, 2 		#Move to the next pixel
+ 	add r10, 2 			#Move to the next pixel
  	jmp .Lloop_grey_single
 
 .Lend:
