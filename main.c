@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     char relativePath[100];
     char relativePathCopy[100];
     // 105 because -conv (the new ending of the file, without type extension) is +5 chars
-    char newrelativePath[105];
+    char newRelativePath[105];
 
     // Read File Name from User
     printf("Enter the file name: ");
@@ -188,13 +188,12 @@ int main(int argc, char** argv) {
     // Set final values to input values (that is now written back to memory)
     rgbValues = rgbFinalValues;
 
-
     /******** Write picture ***********/
     // JPG File
     if(isJPG) {
         // New name of file
-        strcat(newrelativePath, fileName);
-        strcat(newrelativePath, "-conv.jpg");
+        strcat(newRelativePath, fileName);
+        strcat(newRelativePath, "-conv.jpg");
 
         // Open output file
         outFile = fopen(newrelativePath, "wb");
@@ -216,8 +215,8 @@ int main(int argc, char** argv) {
     // BMP File
     } else {
         // New name of file
-        strcat(newrelativePath, fileName);
-        strcat(newrelativePath, "-conv.bmp");
+        strcat(newRelativePath, fileName);
+        strcat(newRelativePath, "-conv.bmp");
 
         // Open file to write back the picture to memory
         outFile = fopen(newrelativePath, "wb");
