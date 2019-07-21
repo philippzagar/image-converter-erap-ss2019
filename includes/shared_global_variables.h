@@ -1,5 +1,5 @@
 // Libjpeg Library
-#include "./libjpeg-master/jpeglib.h"
+#include "../libjpeg-master/jpeglib.h"
 
 // Global variables
 extern unsigned int global_image_height;

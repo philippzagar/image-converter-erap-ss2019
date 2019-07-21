@@ -10,16 +10,16 @@
 
 /***** C Functions ******/
 // BMP Structs
-#include "BMPStructs.h"
+#include "includes/BMPStructs.h"
 // BMP Functions
-#include "BMP_functions.h"
-#include "BMP_functions.c"
+#include "includes/BMP_functions.h"
+#include "includes/BMP_functions.c"
 // JPG Functions
-#include "JPG_functions.h"
-#include "JPG_functions.c"
+#include "includes/JPG_functions.h"
+#include "includes/JPG_functions.c"
 // Time Measurements
-#include "time_measurements.h"
-#include "time_measurements.c"
+#include "includes/time_measurements.h"
+#include "includes/time_measurements.c"
 
 // Additional Functions
 bool endsWith(char *str, char *suffix);
@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
         strcat(newRelativePath, "-conv.jpg");
 
         // Open output file
-        outFile = fopen(newrelativePath, "wb");
+        outFile = fopen(newRelativePath, "wb");
 
         if (!outFile) {
             printf("Error while opening JPG file to write\n");
@@ -219,7 +219,7 @@ int main(int argc, char** argv) {
         strcat(newRelativePath, "-conv.bmp");
 
         // Open file to write back the picture to memory
-        outFile = fopen(newrelativePath, "wb");
+        outFile = fopen(newRelativePath, "wb");
         if( !outFile ) {
             printf("Error while opening file\n");
             return -1;
