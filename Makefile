@@ -1,8 +1,8 @@
-CFLAGS= -O3 -g -Wall -Wextra -no-pie
+CFLAGS= -O3 -g -Wall -Wextra -no-pie -w
 
 .PHONY: all
 all: main
-main: main.c grey.S grey_SIMD.S blur.S blur_SIMD.S 
+main: main.c -ljpeg grey.S grey_SIMD.S blur.S blur_SIMD.S
 
 
 .PHONY: clean

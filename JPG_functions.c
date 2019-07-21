@@ -1,3 +1,7 @@
+#include "JPG_functions.h"
+
+#include "shared_global_variables.h"
+
 // Struct for Error handeling
 struct my_error_mgr {
     struct jpeg_error_mgr pub;
@@ -91,7 +95,7 @@ void save_scanline(unsigned char* buffer, RGB* rgbValues, int actualHeight) {
 }
 
 // Write JPG File to memory
-boolean write_JPEG_file (FILE* outfile, int quality, RGB* rgbValues)
+bool write_JPEG_file (FILE* outfile, int quality, RGB* rgbValues)
 {
     // Converting RGB Values to JSAMPLE format (needed for writing the values to the file)
     JSAMPLE* image_buffer = (JSAMPLE*) rgbValues;
