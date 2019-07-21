@@ -78,12 +78,6 @@ int main(int argc, char** argv) {
     char delimiter[] = ".";
     char* fileName = strtok(relativePathCopy, delimiter);
 
-    // Neues bild mit -conv
-
-    // Just for testing
-    //strcpy(relativePath, "./lena.bmp");
-    //strcpy(relativePath, "./test_gross.bmp");
-
     // Check File format
     bool isJPG = endsWith(relativePath, ".jpg") || endsWith(relativePath, ".JPG");
     bool isBMP = endsWith(relativePath, ".bmp") || endsWith(relativePath, ".BMP");
@@ -269,5 +263,3 @@ bool endsWith(char *str, char *suffix)
 
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
-
-// -w
