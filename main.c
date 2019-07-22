@@ -6,7 +6,7 @@
 // For time measurements
 #include <time.h>
 // Libjpeg Library
-#include "./libjpeg-master/jpeglib.h"
+#include "includes/libjpeg-master/jpeglib.h"
 
 /***** C Functions ******/
 // BMP Structs
@@ -53,22 +53,37 @@ int main(int argc, char** argv) {
     // RGB Values
     RGB* rgbValues;
     // File path
-    char relativePath[100];
-    char relativePathCopy[100];
-    // 105 because -conv (the new ending of the file, without type extension) is +5 chars
-    char newRelativePath[105];
+    char* relativePath;
 
-    // Read File Name from User
-    printf("Enter the file name: ");
-    if(fgets(relativePath, 100, stdin) == NULL) {
-        printf("Error while reading filename\n");
+    // If no file name is entered
+    if(argc <= 1) {
+        printf("No file name was entered!\n");
+        return -1;
+    } else if (argc > 2) {
+        printf("Too many arguments were entered!\n");
         return -1;
     }
+
+    // Set relative Path from command line arguments array
+    relativePath = argv[1];
 
     // Remove \n of input string
     size_t ln = strlen(relativePath) - 1;
     if (*relativePath && relativePath[ln] == '\n') {
         relativePath[ln] = '\0';
+    }
+
+    // Allocate new path string
+    char* relativePathCopy = (char*) malloc(strlen(relativePath));
+    if( !relativePathCopy ) {
+        printf("Error while reading filename\n");
+        return -1;
+    }
+    // Allocate new space for new file name with -conv, therefor +5 bytes
+    char* newRelativePath = (char*) malloc(strlen(relativePath) + 5);
+    if( !newRelativePath ) {
+        printf("Error while reading filename\n");
+        return -1;
     }
 
     // Copy string because the original String is modified through the split operation
