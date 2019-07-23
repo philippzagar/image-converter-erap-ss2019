@@ -63,6 +63,12 @@ RGB* read_JPEG_file (FILE* infile)
 
     // Allocate space for the final RGB array
     RGB* rgbValues = (RGB*) malloc(cinfo.image_height * cinfo.image_width * sizeof(RGB));
+
+    if(!rgbValues) {
+        printf("Error allocation new memory!\n");
+        return NULL;
+    }
+
     // Counter in which line the reader actually is
     int actualHeight = 0;
 
