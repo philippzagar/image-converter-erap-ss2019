@@ -12,13 +12,10 @@
 // BMP Structs
 #include "includes/BMPStructs.h"
 // BMP Functions
-#include "includes/BMP_functions.h"
 #include "includes/BMP_functions.c"
 // JPG Functions
-#include "includes/JPG_functions.h"
 #include "includes/JPG_functions.c"
 // Time Measurements
-#include "includes/time_measurements.h"
 #include "includes/time_measurements.c"
 
 // Additional Functions
